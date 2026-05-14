@@ -32,6 +32,7 @@ import {
   handleComponentWorkflows,
   handleComponentJobs,
 } from './commands/component.js';
+import { handleValidate } from './commands/validate.js';
 import { loadConfig } from './config/loader.js';
 import type { GitLabCIConfig } from './config/types.js';
 
@@ -297,5 +298,39 @@ componentCmd
     process.exit(result.exitCode);
   });
 
+// ── validate ─────────────────────────────────
+program
+  .command('validate')
+  .description('Validate a .gitlab-ci.yml pipeline configuration')
+  .argument('[file]', 'Path to .gitlab-ci.yml file')
+  .option('--stdin', 'Read pipeline content from stdin')
+  .option('--dry-run', 'Evaluate rules and show which jobs would execute')
+  .option('--project <path>', 'GitLab project path for context-aware validation')
+  .option('--var <key=value>', 'Simulate CI/CD variables (can be repeated)', collectVar, [])
+  .option('--json', 'Output results as JSON')
+  .action(async (file: string | undefined, opts: Record<string, unknown>) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const options = {
+      stdin: (opts.stdin as boolean) ?? false,
+      dryRun: (opts.dryRun as boolean) ?? false,
+      project: opts.project as string | undefined,
+      vars: opts.Var as string[] | undefined,
+      json: (opts.json as boolean) ?? false,
+    };
+
+    const result = await handleValidate(file, mergedConfig, options);
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
 // ── Parse ─────────────────────────────────────
 program.parse(process.argv);
+
+// Helper: collect repeated --var values
+function collectVar(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
