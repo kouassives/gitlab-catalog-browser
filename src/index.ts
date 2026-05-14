@@ -5,6 +5,7 @@
  *
  * Main entry point for the `gitlab-ci-cli` command.
  * Registers all commands using Commander.js.
+ * Loads configuration at startup and makes it available to all commands.
  */
 
 import { Command } from 'commander';
@@ -20,6 +21,8 @@ import {
   type UpgradeOptions,
   type DoctorOptions,
 } from './commands/setup.js';
+import { loadConfig } from './config/loader.js';
+import type { GitLabCIConfig } from './config/types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -34,12 +37,27 @@ function loadPackageVersion(): string {
   }
 }
 
+// Load configuration at startup — this reads config files, env vars, etc.
+// CLI flags will override these values later in individual command handlers.
+const cliConfig: GitLabCIConfig = loadConfig();
+
+// Utility: merge CLI flag overrides into the loaded config
+function overrideConfig(overrides: Partial<GitLabCIConfig>): GitLabCIConfig {
+  return { ...cliConfig, ...overrides };
+}
+
 const program = new Command();
 
 program
   .name('gitlab-ci-cli')
   .description('CLI tool for browsing the GitLab CI/CD Catalog and managing pipelines')
   .version(loadPackageVersion());
+
+// ── Global options ───────────────────────────
+// These can be used with any command
+program
+  .option('--gitlab-url <url>', 'GitLab instance URL')
+  .option('--token <token>', 'GitLab personal access token');
 
 // ── init ──────────────────────────────────────
 program
@@ -86,10 +104,16 @@ program
   .description('Run comprehensive environment diagnostics')
   .option('--json', 'Output results in JSON format')
   .action(async (options: { json?: boolean }) => {
+    // Use loaded config, allowing CLI flags to override
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
     const doctorOptions: DoctorOptions = {
       json: options.json ?? false,
-      gitlabUrl: process.env.GITLAB_CI_CLI_URL || undefined,
-      token: process.env.GITLAB_CI_CLI_TOKEN || undefined,
+      gitlabUrl: mergedConfig.gitlabUrl,
+      token: mergedConfig.token,
     };
 
     const result = await handleDoctor(doctorOptions);
