@@ -33,6 +33,13 @@ import {
   handleComponentJobs,
 } from './commands/component.js';
 import { handleValidate } from './commands/validate.js';
+import {
+  handlePipelineExplain,
+  handlePipelineTrace,
+  handlePipelineStages,
+  handlePipelineIncludes,
+  handlePipelineSummary,
+} from './commands/pipeline.js';
 import { loadConfig } from './config/loader.js';
 import type { GitLabCIConfig } from './config/types.js';
 
@@ -292,6 +299,112 @@ componentCmd
 
     const result = await handleComponentJobs(fullPath, mergedConfig, {
       withArtifacts: options.withArtifacts ?? false,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+// ── pipeline ─────────────────────────────────
+const pipelineCmd = program
+  .command('pipeline')
+  .description('Analyze GitLab CI pipeline configurations');
+
+pipelineCmd
+  .command('explain')
+  .description('Show job dependency graph for specified jobs')
+  .argument('<file>', 'Path to .gitlab-ci.yml file')
+  .requiredOption('--jobs <list>', 'Comma-separated job names (or "all")')
+  .option('--json', 'Output as JSON')
+  .action(async (file: string, opts: { jobs: string; json?: boolean }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handlePipelineExplain(file, mergedConfig, {
+      jobs: opts.jobs,
+      json: opts.json ?? false,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+pipelineCmd
+  .command('trace')
+  .description('Trace variable usage across the pipeline')
+  .argument('<file>', 'Path to .gitlab-ci.yml file')
+  .requiredOption('--var <name>', 'Variable name to trace')
+  .option('--json', 'Output as JSON')
+  .action(async (file: string, opts: { var: string; json?: boolean }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handlePipelineTrace(file, mergedConfig, {
+      var: opts.var,
+      json: opts.json ?? false,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+pipelineCmd
+  .command('stages')
+  .description('List pipeline stages and their jobs')
+  .argument('<file>', 'Path to .gitlab-ci.yml file')
+  .option('--mermaid', 'Output as Mermaid diagram')
+  .option('--json', 'Output as JSON')
+  .action(async (file: string, opts: { mermaid?: boolean; json?: boolean }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handlePipelineStages(file, mergedConfig, {
+      mermaid: opts.mermaid ?? false,
+      json: opts.json ?? false,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+pipelineCmd
+  .command('includes')
+  .description('Show include hierarchy of the pipeline')
+  .argument('<file>', 'Path to .gitlab-ci.yml file')
+  .option('--json', 'Output as JSON')
+  .action(async (file: string, opts: { json?: boolean }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handlePipelineIncludes(file, mergedConfig, {
+      json: opts.json ?? false,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+pipelineCmd
+  .command('summary')
+  .description('Generate a structured pipeline summary')
+  .argument('<file>', 'Path to .gitlab-ci.yml file')
+  .option('--json', 'Output as JSON')
+  .action(async (file: string, opts: { json?: boolean }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handlePipelineSummary(file, mergedConfig, {
+      json: opts.json ?? false,
     });
 
     console.log(result.output);
