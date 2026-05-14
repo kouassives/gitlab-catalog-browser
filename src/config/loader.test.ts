@@ -111,7 +111,7 @@ describe('loadProjectConfig', () => {
     expect(result).toBeTruthy();
     expect(result?.gitlabUrl).toBe('https://gitlab.example.com');
     // Verify the correct path was checked
-    expect(fs.existsSync).toHaveBeenCalledWith('/some/project/.gitlab-ci-cli.json');
+    expect(fs.existsSync).toHaveBeenCalledWith('/some/project/.gitlab-catalog-browser.json');
   });
 
   it('should return null if project config does not exist', () => {
@@ -127,7 +127,7 @@ describe('loadUserConfig', () => {
     mockReadFile(VALID_CONFIG);
     const result = loadUserConfig();
     expect(result).toBeTruthy();
-    expect(fs.existsSync).toHaveBeenCalledWith('/home/testuser/.gitlab-ci-cli.json');
+    expect(fs.existsSync).toHaveBeenCalledWith('/home/testuser/.gitlab-catalog-browser.json');
   });
 
   it('should return null if user config does not exist', () => {

@@ -45,15 +45,15 @@ function findCliPath(): string {
   const envBin = process.env.GITLAB_CI_CLI_BIN;
   if (envBin && existsSync(envBin)) return resolve(envBin);
 
-  // 2. Try the bin/gitlab-ci-cli.js relative to this file
-  const binPath = resolve(dirname(__filename), '..', '..', 'bin', 'gitlab-ci-cli.js');
+  // 2. Try the bin/gitlab-catalog-browser.js relative to this file
+  const binPath = resolve(dirname(__filename), '..', '..', 'bin', 'gitlab-catalog-browser.js');
   if (existsSync(binPath)) return binPath;
 
   // 3. Try process.argv[1] (the script that started this process)
   if (process.argv[1] && existsSync(process.argv[1])) return resolve(process.argv[1]);
 
   // 4. Fallback: use the same node executable with a known relative path
-  return 'gitlab-ci-cli';
+  return 'gitlab-catalog-browser';
 }
 
 /**

@@ -12,7 +12,7 @@ CLI tool for AI agents to browse GitLab CI/CD Catalog, inspect component schemas
 ┌─────────────────────────────────────────────────────────────┐
 │  CLI (TypeScript/Node.js)                                   │
 │  ├── Commands: catalog, component, validate, lint          │
-│  ├── Config: gitlab-ci-cli.json (project/user level)       │
+│  ├── Config: gitlab-catalog-browser.json (project/user level)       │
 │  └── Skills: skill-data/ for agent instructions           │
 ├─────────────────────────────────────────────────────────────┤
 │  GitLab CI/CD Catalog API                                   │
@@ -49,7 +49,7 @@ The CLI SHALL provide commands to browse GitLab CI/CD Catalog components from an
 #### Scenario: List components for an organization
 
 - **GIVEN** A GitLab instance URL and optional access token
-- **WHEN** User executes `gitlab-ci-cli catalog list --org to-be-continuous`
+- **WHEN** User executes `gitlab-catalog-browser catalog list --org to-be-continuous`
 - **THEN** The CLI fetches all catalog components from `to-be-continuous` namespace
 - **AND** Displays component name, version, description in table format
 - **AND** Supports `--json` flag for machine-readable output
@@ -57,7 +57,7 @@ The CLI SHALL provide commands to browse GitLab CI/CD Catalog components from an
 #### Scenario: Search components by keyword
 
 - **GIVEN** A search query string
-- **WHEN** User executes `gitlab-ci-cli catalog search "docker build"`
+- **WHEN** User executes `gitlab-catalog-browser catalog search "docker build"`
 - **THEN** The CLI returns components matching the keyword
 - **AND** Supports pagination with `--page` and `--per-page` flags
 
@@ -70,7 +70,7 @@ The CLI SHALL retrieve and display complete schema information for CI/CD compone
 #### Scenario: Get component full schema
 
 - **GIVEN** A component full path (e.g., `to-be-continuous/docker-build`)
-- **WHEN** User executes `gitlab-ci-cli component schema to-be-continuous/docker-build`
+- **WHEN** User executes `gitlab-catalog-browser component schema to-be-continuous/docker-build`
 - **THEN** The CLI returns the component's YAML specification including:
   - `spec:inputs` with all input parameters (name, type, default, description)
   - `spec:inputs:options` for constrained inputs
@@ -82,7 +82,7 @@ The CLI SHALL retrieve and display complete schema information for CI/CD compone
 #### Scenario: Inspect component inputs in detail
 
 - **GIVEN** A component full path
-- **WHEN** User executes `gitlab-ci-cli component inputs to-be-continuous/docker-build`
+- **WHEN** User executes `gitlab-catalog-browser component inputs to-be-continuous/docker-build`
 - **THEN** The CLI displays a formatted list of inputs with:
   - Name and type (string, number, boolean, array)
   - Default value if present
@@ -93,7 +93,7 @@ The CLI SHALL retrieve and display complete schema information for CI/CD compone
 #### Scenario: List workflows defined in component
 
 - **GIVEN** A component path
-- **WHEN** User executes `gitlab-ci-cli component workflows to-be-continuous/docker-build`
+- **WHEN** User executes `gitlab-catalog-browser component workflows to-be-continuous/docker-build`
 - **THEN** The CLI returns workflow definitions including trigger conditions and job dependencies
 
 ---
@@ -105,7 +105,7 @@ The CLI SHALL validate `.gitlab-ci.yml` files using GitLab CI Lint API.
 #### Scenario: Validate local file
 
 - **GIVEN** A `.gitlab-ci.yml` file path
-- **WHEN** User executes `gitlab-ci-cli validate .gitlab-ci.yml`
+- **WHEN** User executes `gitlab-catalog-browser validate .gitlab-ci.yml`
 - **THEN** The CLI reads the file content
 - **AND** Sends to GitLab CI Lint API (`/api/v4/validate`)
 - **AND** Returns validation result with errors/warnings locations
@@ -114,14 +114,14 @@ The CLI SHALL validate `.gitlab-ci.yml` files using GitLab CI Lint API.
 #### Scenario: Validate with dry-run (respects rules)
 
 - **GIVEN** A `.gitlab-ci.yml` file
-- **WHEN** User executes `gitlab-ci-cli validate --dry-run .gitlab-ci.yml`
+- **WHEN** User executes `gitlab-catalog-browser validate --dry-run .gitlab-ci.yml`
 - **THEN** The CLI evaluates `rules:` conditions
 - **AND** Shows which jobs would execute based on current context
 
 #### Scenario: Validate with project context
 
 - **GIVEN** A GitLab project path (e.g., `my-group/my-project`)
-- **WHEN** User executes `gitlab-ci-cli validate --project my-group/my-project .gitlab-ci.yml`
+- **WHEN** User executes `gitlab-catalog-browser validate --project my-group/my-project .gitlab-ci.yml`
 - **THEN** The CLI uses project-specific CI variables and includes
 - **AND** Provides more accurate validation results
 
@@ -134,7 +134,7 @@ The CLI SHALL provide commands to help agents understand and troubleshoot pipeli
 #### Scenario: Explain job dependencies
 
 - **GIVEN** A `.gitlab-ci.yml` file
-- **WHEN** User executes `gitlab-ci-cli pipeline explain --jobs build,test,deploy`
+- **WHEN** User executes `gitlab-catalog-browser pipeline explain --jobs build,test,deploy`
 - **THEN** The CLI displays the dependency graph in Mermaid format
 - **AND** Shows which artifacts are passed between jobs
 - **AND** Identifies potential bottlenecks
@@ -142,14 +142,14 @@ The CLI SHALL provide commands to help agents understand and troubleshoot pipeli
 #### Scenario: Trace variable usage
 
 - **GIVEN** A `.gitlab-ci.yml` file and a variable name
-- **WHEN** User executes `gitlab-ci-cli pipeline trace --var CI_COMMIT_REF_NAME`
+- **WHEN** User executes `gitlab-catalog-browser pipeline trace --var CI_COMMIT_REF_NAME`
 - **THEN** The CLI shows where the variable is defined, used, and overridden
 - **AND** Indicates if it's a predefined variable or custom
 
 #### Scenario: Identify pipeline stages
 
 - **GIVEN** A `.gitlab-ci.yml` file
-- **WHEN** User executes `gitlab-ci-cli pipeline stages`
+- **WHEN** User executes `gitlab-catalog-browser pipeline stages`
 - **THEN** The CLI lists all stages in execution order
 - **AND** Shows jobs in each stage
 - **AND** Shows parallel vs sequential execution
@@ -157,7 +157,7 @@ The CLI SHALL provide commands to help agents understand and troubleshoot pipeli
 #### Scenario: Show include chain
 
 - **GIVEN** A `.gitlab-ci.yml` file with multiple `include:` statements
-- **WHEN** User executes `gitlab-ci-cli pipeline includes`
+- **WHEN** User executes `gitlab-catalog-browser pipeline includes`
 - **THEN** The CLI visualizes the include hierarchy
 - **AND** Shows resolved configurations from each include
 
@@ -169,7 +169,7 @@ The CLI SHALL support configuration files for GitLab instance and authentication
 
 #### Scenario: Load configuration from files
 
-- **GIVEN** Configuration files at project (`.gitlab-ci-cli.json`) and user (`~/.gitlab-ci-cli.json`) level
+- **GIVEN** Configuration files at project (`.gitlab-catalog-browser.json`) and user (`~/.gitlab-catalog-browser.json`) level
 - **WHEN** CLI executes any command
 - **THEN** Configuration is merged: user config < project config < CLI flags < env vars
 - **AND** Supported config keys: `gitlabUrl`, `token`, `project`, `timeout`
@@ -189,7 +189,7 @@ The CLI SHALL serve skill content for AI agent workflows following Agent Skills 
 #### Scenario: Serve core skill content
 
 - **GIVEN** The CLI is installed
-- **WHEN** Agent executes `gitlab-ci-cli skills get core`
+- **WHEN** Agent executes `gitlab-catalog-browser skills get core`
 - **THEN** The CLI outputs core workflow instructions including:
   - How to browse catalog components
   - How to generate pipeline from templates
@@ -197,7 +197,7 @@ The CLI SHALL serve skill content for AI agent workflows following Agent Skills 
 
 #### Scenario: Serve specialized skill content
 
-- **GIVEN** Specialized skills exist (e.g., `gitlab-ci-cli skills get templates`)
+- **GIVEN** Specialized skills exist (e.g., `gitlab-catalog-browser skills get templates`)
 - **WHEN** Agent requests a specialized skill
 - **THEN** The CLI outputs skill-specific content from `skill-data/` directory
 
@@ -205,47 +205,47 @@ The CLI SHALL serve skill content for AI agent workflows following Agent Skills 
 
 ## Command Reference
 
-### `gitlab-ci-cli catalog`
+### `gitlab-catalog-browser catalog`
 
 | Command | Description |
 |---------|-------------|
-| `gitlab-ci-cli catalog list --org <namespace>` | List all components in namespace |
-| `gitlab-ci-cli catalog search <query>` | Search components by keyword |
-| `gitlab-ci-cli catalog info <full-path>` | Show component summary |
+| `gitlab-catalog-browser catalog list --org <namespace>` | List all components in namespace |
+| `gitlab-catalog-browser catalog search <query>` | Search components by keyword |
+| `gitlab-catalog-browser catalog info <full-path>` | Show component summary |
 
-### `gitlab-ci-cli component`
-
-| Command | Description |
-|---------|-------------|
-| `gitlab-ci-cli component schema <full-path>` | Get complete component schema |
-| `gitlab-ci-cli component inputs <full-path>` | List all inputs with details |
-| `gitlab-ci-cli component workflows <full-path>` | List workflow definitions |
-| `gitlab-ci-cli component jobs <full-path>` | List job definitions |
-
-### `gitlab-ci-cli validate`
+### `gitlab-catalog-browser component`
 
 | Command | Description |
 |---------|-------------|
-| `gitlab-ci-cli validate <file>` | Validate .gitlab-ci.yml |
-| `gitlab-ci-cli validate --dry-run <file>` | Validate with rules evaluation |
-| `gitlab-ci-cli validate --project <path> <file>` | Validate with project context |
+| `gitlab-catalog-browser component schema <full-path>` | Get complete component schema |
+| `gitlab-catalog-browser component inputs <full-path>` | List all inputs with details |
+| `gitlab-catalog-browser component workflows <full-path>` | List workflow definitions |
+| `gitlab-catalog-browser component jobs <full-path>` | List job definitions |
 
-### `gitlab-ci-cli pipeline`
-
-| Command | Description |
-|---------|-------------|
-| `gitlab-ci-cli pipeline explain --jobs <jobs>` | Show job dependency graph |
-| `gitlab-ci-cli pipeline trace --var <name>` | Trace variable usage |
-| `gitlab-ci-cli pipeline stages` | List stages and jobs |
-| `gitlab-ci-cli pipeline includes` | Show include hierarchy |
-
-### `gitlab-ci-cli skills`
+### `gitlab-catalog-browser validate`
 
 | Command | Description |
 |---------|-------------|
-| `gitlab-ci-cli skills list` | List available skills |
-| `gitlab-ci-cli skills get <name>` | Get skill content |
-| `gitlab-ci-cli skills get <name> --full` | Include full reference |
+| `gitlab-catalog-browser validate <file>` | Validate .gitlab-ci.yml |
+| `gitlab-catalog-browser validate --dry-run <file>` | Validate with rules evaluation |
+| `gitlab-catalog-browser validate --project <path> <file>` | Validate with project context |
+
+### `gitlab-catalog-browser pipeline`
+
+| Command | Description |
+|---------|-------------|
+| `gitlab-catalog-browser pipeline explain --jobs <jobs>` | Show job dependency graph |
+| `gitlab-catalog-browser pipeline trace --var <name>` | Trace variable usage |
+| `gitlab-catalog-browser pipeline stages` | List stages and jobs |
+| `gitlab-catalog-browser pipeline includes` | Show include hierarchy |
+
+### `gitlab-catalog-browser skills`
+
+| Command | Description |
+|---------|-------------|
+| `gitlab-catalog-browser skills list` | List available skills |
+| `gitlab-catalog-browser skills get <name>` | Get skill content |
+| `gitlab-catalog-browser skills get <name> --full` | Include full reference |
 
 ---
 
@@ -254,7 +254,7 @@ The CLI SHALL serve skill content for AI agent workflows following Agent Skills 
 ```
 gitlab-catalog-browser/
 ├── bin/
-│   └── gitlab-ci-cli.js           # Node.js wrapper (cross-platform)
+│   └── gitlab-catalog-browser.js           # Node.js wrapper (cross-platform)
 ├── cli/
 │   ├── Cargo.toml                  # Rust CLI (optional native module)
 │   └── src/
@@ -289,7 +289,7 @@ gitlab-catalog-browser/
 │       └── SKILL.md           # Agent Skills entry point
 ├── package.json
 ├── tsconfig.json
-└── .gitlab-ci-cli.json.example
+└── .gitlab-catalog-browser.json.example
 ```
 
 ---
@@ -298,7 +298,7 @@ gitlab-catalog-browser/
 
 ### Phase 1: Core CLI Infrastructure
 - [ ] Project setup (TypeScript, package.json, tsconfig)
-- [ ] Node.js wrapper script (`bin/gitlab-ci-cli.js`)
+- [ ] Node.js wrapper script (`bin/gitlab-catalog-browser.js`)
 - [ ] Basic command parsing with `--help`
 - [ ] Configuration loading (project + user level)
 - [ ] GitLab API client base

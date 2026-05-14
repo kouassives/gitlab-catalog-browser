@@ -140,14 +140,14 @@ describe('generateCompletionScript', () => {
   it('should generate bash completion', () => {
     const script = generateCompletionScript('bash');
     expect(script).toContain('bash completion');
-    expect(script).toContain('gitlab-ci-cli');
+    expect(script).toContain('gitlab-catalog-browser');
     expect(script).toContain('COMPREPLY');
   });
 
   it('should generate zsh completion', () => {
     const script = generateCompletionScript('zsh');
     expect(script).toContain('compdef');
-    expect(script).toContain('gitlab-ci-cli');
+    expect(script).toContain('gitlab-catalog-browser');
     expect(script).toContain('catalog:Browse');
   });
 
@@ -161,7 +161,7 @@ describe('generateCompletionScript', () => {
 
 describe('createDefaultConfig', () => {
   it('should create config file at target path', () => {
-    const testPath = '/tmp/test-gitlab-ci-cli.json';
+    const testPath = '/tmp/test-gitlab-catalog-browser.json';
     const result = createDefaultConfig(testPath);
     expect(result.created).toBe(true);
     expect(result.path).toBe(testPath);
@@ -211,11 +211,11 @@ describe('findConfigPath', () => {
   const { join } = require('node:path');
   const os = require('node:os');
 
-  const tmpDir = '/tmp/gitlab-ci-cli-test-config';
+  const tmpDir = '/tmp/gitlab-catalog-browser-test-config';
   mkdirSync(tmpDir, { recursive: true });
 
   it('should find config in the given directory', () => {
-    const configPath = join(tmpDir, '.gitlab-ci-cli.json');
+    const configPath = join(tmpDir, '.gitlab-catalog-browser.json');
     writeFileSync(configPath, '{}', 'utf-8');
 
     const found = findConfigPath(tmpDir);
@@ -226,7 +226,7 @@ describe('findConfigPath', () => {
 
   it('should return null if no config exists', () => {
     const found = findConfigPath('/nonexistent');
-    // It might still find ~/.gitlab-ci-cli.json which doesn't exist,
+    // It might still find ~/.gitlab-catalog-browser.json which doesn't exist,
     // or return null if no config exists anywhere
     if (found) {
       expect(found).toContain(os.homedir());

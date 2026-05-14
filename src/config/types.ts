@@ -1,5 +1,5 @@
 /**
- * Configuration type definitions for gitlab-ci-cli.
+ * Configuration type definitions for gitlab-catalog-browser.
  *
  * Defines the config shape, defaults, and type-safe accessors.
  */

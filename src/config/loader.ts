@@ -1,9 +1,9 @@
 /**
- * Configuration loader for gitlab-ci-cli.
+ * Configuration loader for gitlab-catalog-browser.
  *
  * Loads configuration from multiple sources with proper precedence:
- *   1. User config file  (~/.gitlab-ci-cli.json)   — lowest priority
- *   2. Project config file (./.gitlab-ci-cli.json)  — overrides user
+ *   1. User config file  (~/.gitlab-catalog-browser.json)   — lowest priority
+ *   2. Project config file (./.gitlab-catalog-browser.json)  — overrides user
  *   3. Environment variables (GITLAB_CI_CLI_*)      — overrides files
  *   4. CLI flags                                     — highest priority
  */
@@ -24,7 +24,7 @@ import {
 // Constants
 // ──────────────────────────────────────────────
 
-const CONFIG_FILENAME = '.gitlab-ci-cli.json';
+const CONFIG_FILENAME = '.gitlab-catalog-browser.json';
 
 /**
  * Known config keys (including optional ones like `token`, `project`).

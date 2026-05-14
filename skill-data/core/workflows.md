@@ -1,79 +1,79 @@
 ---
 name: core
-description: Core workflow instructions for using gitlab-ci-cli
+description: Core workflow instructions for using gitlab-catalog-browser
 ---
 
 # Core Workflows
 
 ## Overview
 
-gitlab-ci-cli is a CLI tool for AI agents to browse the GitLab CI/CD Catalog, inspect component schemas, validate pipeline configurations, and analyze pipeline structures.
+gitlab-catalog-browser is a CLI tool for AI agents to browse the GitLab CI/CD Catalog, inspect component schemas, validate pipeline configurations, and analyze pipeline structures.
 
 ## Browsing the Catalog
 
 ```bash
 # List components in a namespace
-gitlab-ci-cli catalog list --org to-be-continuous
+gitlab-catalog-browser catalog list --org to-be-continuous
 
 # Search for components
-gitlab-ci-cli catalog search docker
+gitlab-catalog-browser catalog search docker
 
 # Get component details
-gitlab-ci-cli catalog info to-be-continuous/docker-build
+gitlab-catalog-browser catalog info to-be-continuous/docker-build
 ```
 
 ## Inspecting Component Schemas
 
 ```bash
 # Get full YAML spec
-gitlab-ci-cli component schema to-be-continuous/docker-build
+gitlab-catalog-browser component schema to-be-continuous/docker-build
 
 # List input parameters
-gitlab-ci-cli component inputs to-be-continuous/docker-build
+gitlab-catalog-browser component inputs to-be-continuous/docker-build
 
 # List workflows
-gitlab-ci-cli component workflows to-be-continuous/docker-build
+gitlab-catalog-browser component workflows to-be-continuous/docker-build
 
 # List jobs
-gitlab-ci-cli component jobs to-be-continuous/docker-build
+gitlab-catalog-browser component jobs to-be-continuous/docker-build
 ```
 
 ## Validating Pipelines
 
 ```bash
 # Validate a .gitlab-ci.yml file
-gitlab-ci-cli validate .gitlab-ci.yml
+gitlab-catalog-browser validate .gitlab-ci.yml
 
 # Validate with dry-run rules evaluation
-gitlab-ci-cli validate .gitlab-ci.yml --dry-run
+gitlab-catalog-browser validate .gitlab-ci.yml --dry-run
 
 # Validate with simulated variables
-gitlab-ci-cli validate .gitlab-ci.yml --dry-run --var CI_PIPELINE_SOURCE=merge_request_event
+gitlab-catalog-browser validate .gitlab-ci.yml --dry-run --var CI_PIPELINE_SOURCE=merge_request_event
 
 # Validate with project context
-gitlab-ci-cli validate .gitlab-ci.yml --project my-group/my-project
+gitlab-catalog-browser validate .gitlab-ci.yml --project my-group/my-project
 
 # Validate piped content
-echo "stages: [build]" | gitlab-ci-cli validate --stdin
+echo "stages: [build]" | gitlab-catalog-browser validate --stdin
 ```
 
 ## Analyzing Pipelines
 
 ```bash
 # Show job dependency graph
-gitlab-ci-cli pipeline explain .gitlab-ci.yml --jobs build,test,deploy
+gitlab-catalog-browser pipeline explain .gitlab-ci.yml --jobs build,test,deploy
 
 # Trace variable usage
-gitlab-ci-cli pipeline trace .gitlab-ci.yml --var MY_VAR
+gitlab-catalog-browser pipeline trace .gitlab-ci.yml --var MY_VAR
 
 # List stages
-gitlab-ci-cli pipeline stages .gitlab-ci.yml
+gitlab-catalog-browser pipeline stages .gitlab-ci.yml
 
 # Show include hierarchy
-gitlab-ci-cli pipeline includes .gitlab-ci.yml
+gitlab-catalog-browser pipeline includes .gitlab-ci.yml
 
 # Generate pipeline summary
-gitlab-ci-cli pipeline summary .gitlab-ci.yml
+gitlab-catalog-browser pipeline summary .gitlab-ci.yml
 ```
 
 ## Troubleshooting

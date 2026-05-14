@@ -17,7 +17,7 @@ import { homedir } from 'node:os';
 export const MIN_NODE_VERSION = '18.0.0';
 export const PACKAGE_NAME = 'gitlab-catalog-browser';
 export const NPM_REGISTRY_URL = `https://registry.npmjs.org/${PACKAGE_NAME}/latest`;
-const CONFIG_FILENAME = '.gitlab-ci-cli.json';
+const CONFIG_FILENAME = '.gitlab-catalog-browser.json';
 
 // ──────────────────────────────────────────────
 // Types
@@ -212,8 +212,8 @@ export function createDefaultConfig(
  */
 export function generateCompletionScript(shell: ShellType): string {
   if (shell === 'bash') {
-    return `# gitlab-ci-cli bash completion
-_gitlab_ci_cli_completions() {
+    return `# gitlab-catalog-browser bash completion
+_gitlab_catalog_browser_completions() {
   local cur prev words cword
   COMPREPLY=()
   cur="$\{COMP_WORDS[COMP_CWORD]}"
@@ -221,13 +221,13 @@ _gitlab_ci_cli_completions() {
   commands="catalog component validate pipeline skills init upgrade doctor"
   COMPREPLY=($(compgen -W "$commands" -- "$cur"))
 }
-complete -F _gitlab_ci_cli_completions gitlab-ci-cli
+complete -F _gitlab_catalog_browser_completions gitlab-catalog-browser
 `;
   }
 
   if (shell === 'zsh') {
-    return `#compdef gitlab-ci-cli
-_gitlab_ci_cli() {
+    return `#compdef gitlab-catalog-browser
+_gitlab_catalog_browser() {
   local -a commands
   commands=(
     'catalog:Browse GitLab CI/CD Catalog'
@@ -241,7 +241,7 @@ _gitlab_ci_cli() {
   )
   _describe 'command' commands
 }
-compdef _gitlab_ci_cli gitlab-ci-cli
+compdef _gitlab_catalog_browser gitlab-catalog-browser
 `;
   }
 
@@ -290,7 +290,7 @@ export function handleInit(options: InitOptions = {}): {
   // 3. Shell completion
   if (options.completion) {
     const script = generateCompletionScript(options.completion);
-    const completionTarget = join(homedir(), `.gitlab-ci-cli-completion.${options.completion}`);
+    const completionTarget = join(homedir(), `.gitlab-catalog-browser-completion.${options.completion}`);
     writeFileSync(completionTarget, script, 'utf-8');
     messages.push(`✓ Shell completion script generated for ${options.completion}`);
     messages.push(`  Source it with: source ${completionTarget}`);

@@ -7,7 +7,7 @@ import { existsSync, writeFileSync, unlinkSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { handleInit, type InitOptions } from './setup.js';
 
-const TEST_CONFIG_PATH = '/tmp/gitlab-ci-cli-init-test.json';
+const TEST_CONFIG_PATH = '/tmp/gitlab-catalog-browser-init-test.json';
 
 describe('handleInit', () => {
   beforeEach(() => {
@@ -45,7 +45,7 @@ describe('handleInit', () => {
 
   it('should warn when config already exists without force', () => {
     // Create a pre-existing config at the default location
-    const configPath = join(process.cwd(), '.gitlab-ci-cli.json');
+    const configPath = join(process.cwd(), '.gitlab-catalog-browser.json');
     const existed = existsSync(configPath);
 
     if (!existed) {

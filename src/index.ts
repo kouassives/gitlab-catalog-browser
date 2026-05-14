@@ -3,7 +3,7 @@
 /**
  * gitlab-catalog-browser — CLI entry point
  *
- * Main entry point for the `gitlab-ci-cli` command.
+ * Main entry point for the `gitlab-catalog-browser` command.
  * Registers all commands using Commander.js.
  * Loads configuration at startup and makes it available to all commands.
  */
@@ -74,7 +74,7 @@ function overrideConfig(overrides: Partial<GitLabCIConfig>): GitLabCIConfig {
 const program = new Command();
 
 program
-  .name('gitlab-ci-cli')
+  .name('gitlab-catalog-browser')
   .description('CLI tool for browsing the GitLab CI/CD Catalog and managing pipelines')
   .version(loadPackageVersion());
 

@@ -165,12 +165,12 @@ the distribution SHALL be verified for completeness and integrity.
 GIVEN a successful publish to npm
 WHEN a user runs `npm install -g gitlab-catalog-browser`
 THEN the installed package includes:
-  - The `bin/gitlab-ci-cli.js` entry point
+  - The `bin/gitlab-catalog-browser.js` entry point
   - The compiled `dist/` directory with all JavaScript files
   - The `skill-data/` directory with agent skill instructions
   - The `skills/` directory with agent skill entry point
   - The `package.json` with correct `bin` reference
-AND running `gitlab-ci-cli --help` displays usage information
+AND running `gitlab-catalog-browser --help` displays usage information
 
 #### Scenario: Published package excludes development files
 
@@ -186,6 +186,6 @@ THEN it does NOT include:
 
 GIVEN the package is published on npm
 WHEN a user runs `npm install -g gitlab-catalog-browser`
-THEN the `gitlab-ci-cli` command is available in the PATH
-AND `gitlab-ci-cli --version` displays the correct version
-AND `gitlab-ci-cli --help` displays usage information
+THEN the `gitlab-catalog-browser` command is available in the PATH
+AND `gitlab-catalog-browser --version` displays the correct version
+AND `gitlab-catalog-browser --help` displays usage information

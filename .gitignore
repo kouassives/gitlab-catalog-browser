@@ -142,8 +142,8 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
-# gitlab-ci-cli generated config
-.gitlab-ci-cli.json
-.gitlab-ci-cli.json.bak
-.gitlab-ci-cli-cache.json
+# gitlab-catalog-browser generated config
+.gitlab-catalog-browser.json
+.gitlab-catalog-browser.json.bak
+.gitlab-catalog-browser-cache.json
 docker-build.yml

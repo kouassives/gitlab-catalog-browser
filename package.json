@@ -4,12 +4,12 @@
   "description": "CLI tool for AI agents to browse GitLab CI/CD Catalog, inspect component schemas, and validate pipeline configurations",
   "type": "module",
   "bin": {
-    "gitlab-ci-cli": "./bin/gitlab-ci-cli.js"
+    "gitlab-catalog-browser": "./bin/gitlab-catalog-browser.js"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node bin/gitlab-ci-cli.js",
+    "start": "node bin/gitlab-catalog-browser.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

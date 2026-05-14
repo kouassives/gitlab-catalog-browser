@@ -2,7 +2,7 @@
   "skills": [
     {
       "name": "core",
-      "description": "Core workflow instructions for using gitlab-ci-cli to browse, validate, and manage GitLab CI/CD pipelines"
+      "description": "Core workflow instructions for using gitlab-catalog-browser to browse, validate, and manage GitLab CI/CD pipelines"
     },
     {
       "name": "templates",

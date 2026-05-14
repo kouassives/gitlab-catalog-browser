@@ -1,7 +1,7 @@
 /**
  * Schema Cache — file-based JSON cache with TTL for component schema data.
  *
- * Cache entries are persisted in `.gitlab-ci-cli-cache.json` in the
+ * Cache entries are persisted in `.gitlab-catalog-browser-cache.json` in the
  * configured cache directory (default: current working directory).
  * Supports configurable TTL via `GITLAB_CI_CLI_CACHE_TTL` env var (ms).
  * Cache directory can be overridden via `GITLAB_CI_CLI_CACHE_DIR` env var.
@@ -15,7 +15,7 @@ import { join } from 'node:path';
 // ──────────────────────────────────────────────
 
 const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
-const CACHE_FILENAME = '.gitlab-ci-cli-cache.json';
+const CACHE_FILENAME = '.gitlab-catalog-browser-cache.json';
 
 interface CacheEntry {
   data: unknown;

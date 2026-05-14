@@ -2,7 +2,7 @@
 
 ## Overview
 
-This capability provides configuration management for the gitlab-ci-cli tool. It supports loading configuration from multiple sources, merging them with proper precedence, and using environment variables for sensitive values.
+This capability provides configuration management for the gitlab-catalog-browser tool. It supports loading configuration from multiple sources, merging them with proper precedence, and using environment variables for sensitive values.
 
 ---
 
@@ -15,16 +15,16 @@ the system SHALL load configuration from project-level and user-level configurat
 
 #### Scenario: Load project configuration
 
-GIVEN a file named `.gitlab-ci-cli.json` in the current working directory
-WHEN any gitlab-ci-cli command is executed
+GIVEN a file named `.gitlab-catalog-browser.json` in the current working directory
+WHEN any gitlab-catalog-browser command is executed
 THEN the CLI reads the project-level configuration file
 AND makes the settings available to all commands
 AND exits with code 0
 
 #### Scenario: Load user configuration
 
-GIVEN a file named `~/.gitlab-ci-cli.json` in the user's home directory
-WHEN any gitlab-ci-cli command is executed
+GIVEN a file named `~/.gitlab-catalog-browser.json` in the user's home directory
+WHEN any gitlab-catalog-browser command is executed
 AND no project-level config file exists
 THEN the CLI reads the user-level configuration file as fallback
 AND makes the settings available to all commands
@@ -32,8 +32,8 @@ AND exits with code 0
 
 #### Scenario: Merge user and project configuration
 
-GIVEN both `~/.gitlab-ci-cli.json` and `./.gitlab-ci-cli.json` exist
-WHEN any gitlab-ci-cli command is executed
+GIVEN both `~/.gitlab-catalog-browser.json` and `./.gitlab-catalog-browser.json` exist
+WHEN any gitlab-catalog-browser command is executed
 THEN the CLI loads the user config first
 AND merges project config on top, overriding any conflicting keys
 AND CLI flags override both config levels
@@ -43,15 +43,15 @@ AND exits with code 0
 #### Scenario: No configuration files exist
 
 GIVEN no configuration files exist at project or user level
-WHEN any gitlab-ci-cli command is executed
+WHEN any gitlab-catalog-browser command is executed
 THEN the CLI uses all default values
 AND operates without error
 AND may prompt for required values (like GitLab URL) if not provided via flags or env vars
 
 #### Scenario: Config file with invalid JSON
 
-GIVEN a `.gitlab-ci-cli.json` file with invalid JSON syntax
-WHEN any gitlab-ci-cli command is executed
+GIVEN a `.gitlab-catalog-browser.json` file with invalid JSON syntax
+WHEN any gitlab-catalog-browser command is executed
 THEN the CLI displays a warning with the file path and parse error
 AND continues with defaults and other config sources
 AND exits with code 0 (warning only, not fatal)
@@ -87,7 +87,7 @@ the system SHALL allow environment variables to override file-based configuratio
 
 GIVEN a self-hosted GitLab instance
 WHEN the user sets `GITLAB_CI_CLI_URL=https://gitlab.example.com`
-AND executes any gitlab-ci-cli command
+AND executes any gitlab-catalog-browser command
 THEN the CLI uses the environment variable value
 AND overrides any URL from configuration files
 AND exits with code 0
@@ -96,7 +96,7 @@ AND exits with code 0
 
 GIVEN a need to keep the token out of config files
 WHEN the user sets `GITLAB_CI_CLI_TOKEN=glpat-xxxx`
-AND executes any gitlab-ci-cli command
+AND executes any gitlab-catalog-browser command
 THEN the CLI uses the token from the environment variable
 AND does not log or display the token value
 AND exits with code 0
@@ -116,8 +116,8 @@ AND ignores the config file value for that key
 WHEN the CLI resolves a configuration value,
 the system SHALL apply the following precedence order (lowest to highest):
 
-1. User config file (`~/.gitlab-ci-cli.json`)
-2. Project config file (`./.gitlab-ci-cli.json`)
+1. User config file (`~/.gitlab-catalog-browser.json`)
+2. Project config file (`./.gitlab-catalog-browser.json`)
 3. Environment variables (`GITLAB_CI_CLI_*`)
 4. CLI flags (`--gitlab-url`, `--token`, etc.)
 
@@ -133,7 +133,7 @@ AND exits with code 0
 
 ## Configuration File Format
 
-### Example `.gitlab-ci-cli.json`
+### Example `.gitlab-catalog-browser.json`
 
 ```json
 {

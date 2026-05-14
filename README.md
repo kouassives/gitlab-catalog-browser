@@ -73,25 +73,25 @@ spec/
 npm install -g gitlab-catalog-browser
 
 # Initialize project configuration
-gitlab-ci-cli init
+gitlab-catalog-browser init
 
 # Browse catalog components
-gitlab-ci-cli catalog list --org to-be-continuous
+gitlab-catalog-browser catalog list --org to-be-continuous
 
 # Inspect a component
-gitlab-ci-cli component schema to-be-continuous/docker-build
+gitlab-catalog-browser component schema to-be-continuous/docker-build
 
 # Validate a pipeline
-gitlab-ci-cli validate .gitlab-ci.yml
+gitlab-catalog-browser validate .gitlab-ci.yml
 
 # Analyze pipeline structure
-gitlab-ci-cli pipeline explain --jobs build,test,deploy
+gitlab-catalog-browser pipeline explain --jobs build,test,deploy
 
 # Run diagnostics
-gitlab-ci-cli doctor
+gitlab-catalog-browser doctor
 
 # Check for updates
-gitlab-ci-cli upgrade
+gitlab-catalog-browser upgrade
 ```
 
 ## Related
