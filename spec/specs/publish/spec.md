@@ -62,6 +62,7 @@ the publish workflow SHALL build, test, and publish the package to the npm regis
 
 GIVEN a version tag `v0.2.0` pushed to the repository
 AND a Trusted Publisher is configured on npm for the `gitlab-catalog-browser` package
+AND the package is owned by the npm org `gitlab-catalog-agent`
 AND the Trusted Publisher is configured with:
   - Registry: `npmjs.org`
   - Publisher: GitHub
@@ -70,15 +71,16 @@ AND the Trusted Publisher is configured with:
 AND the GitHub workflow has `id-token: write` permission
 WHEN the publish workflow triggers
 THEN the workflow checks out the repository at the tag
-AND sets up Node.js 22.x
+AND sets up Node.js 24.x
 AND runs `npm ci`
 AND runs `npm run build`
 AND runs `npm test`
 AND runs `npm publish --access public` to publish via OIDC
-AND npm automatically generates provenance attestations
+AND provenance is disabled via `NPM_CONFIG_PROVENANCE=false` (private repo)
 AND the published package includes all files listed in `package.json` `files` array
 AND the published version matches the tag version (without the `v` prefix)
-AND no `NPM_TOKEN` secret is required for authentication
+AND no `NODE_AUTH_TOKEN` or npm token is required for authentication
+AND the package is published under the `gitlab-catalog-agent` org
 
 #### Scenario: Publish uses OIDC instead of token
 
