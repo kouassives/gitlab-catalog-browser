@@ -34,12 +34,5 @@ jobs:
       - name: Test
         run: npm test
 
-      - name: Debug npm auth status
-        run: |
-          echo "=== npm config ==="
-          npm config list
-          echo "=== npm whoami (will fail if not authed) ==="
-          npm whoami 2>&1 || echo "Not authed (expected for OIDC)"
-
       - name: Publish to npm
         run: npm publish --provenance --access public
