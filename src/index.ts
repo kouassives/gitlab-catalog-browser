@@ -26,6 +26,12 @@ import {
   handleCatalogSearch,
   handleCatalogInfo,
 } from './commands/catalog.js';
+import {
+  handleComponentSchema,
+  handleComponentInputs,
+  handleComponentWorkflows,
+  handleComponentJobs,
+} from './commands/component.js';
 import { loadConfig } from './config/loader.js';
 import type { GitLabCIConfig } from './config/types.js';
 
@@ -205,6 +211,86 @@ catalogCmd
 
     const result = await handleCatalogInfo(fullPath, mergedConfig, {
       json: options.json ?? false,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+// ── component ────────────────────────────────
+const componentCmd = program
+  .command('component')
+  .description('Inspect GitLab CI/CD component schemas');
+
+componentCmd
+  .command('schema')
+  .description('Get the complete YAML specification of a component')
+  .argument('<full-path>', 'Full component path (e.g. to-be-continuous/docker-build)')
+  .option('--version <version>', 'Specific version to fetch')
+  .option('--output-file <path>', 'Save schema to file')
+  .action(async (fullPath: string, options: { version?: string; outputFile?: string }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handleComponentSchema(fullPath, mergedConfig, {
+      version: options.version,
+      outputFile: options.outputFile,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+componentCmd
+  .command('inputs')
+  .description('List all input parameters for a component')
+  .argument('<full-path>', 'Full component path')
+  .option('--json', 'Output as JSON')
+  .action(async (fullPath: string, options: { json?: boolean }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handleComponentInputs(fullPath, mergedConfig, {
+      json: options.json ?? false,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+componentCmd
+  .command('workflows')
+  .description('List workflow definitions for a component')
+  .argument('<full-path>', 'Full component path')
+  .action(async (fullPath: string) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handleComponentWorkflows(fullPath, mergedConfig);
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+componentCmd
+  .command('jobs')
+  .description('List job definitions for a component')
+  .argument('<full-path>', 'Full component path')
+  .option('--with-artifacts', 'Show artifact dependency information')
+  .action(async (fullPath: string, options: { withArtifacts?: boolean }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handleComponentJobs(fullPath, mergedConfig, {
+      withArtifacts: options.withArtifacts ?? false,
     });
 
     console.log(result.output);
