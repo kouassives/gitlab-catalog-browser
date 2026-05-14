@@ -40,6 +40,11 @@ import {
   handlePipelineIncludes,
   handlePipelineSummary,
 } from './commands/pipeline.js';
+import {
+  handleSkillsList,
+  handleSkillsGet,
+  handleSkillsPath,
+} from './commands/skills.js';
 import { loadConfig } from './config/loader.js';
 import type { GitLabCIConfig } from './config/types.js';
 
@@ -419,7 +424,7 @@ program
   .option('--stdin', 'Read pipeline content from stdin')
   .option('--dry-run', 'Evaluate rules and show which jobs would execute')
   .option('--project <path>', 'GitLab project path for context-aware validation')
-  .option('--var <key=value>', 'Simulate CI/CD variables (can be repeated)', collectVar, [])
+  .option('--var <key=value>', 'Simulate CI/CD variables (repeatable)', collectVar, [] as string[])
   .option('--json', 'Output results as JSON')
   .action(async (file: string | undefined, opts: Record<string, unknown>) => {
     const mergedConfig = overrideConfig({
@@ -440,10 +445,70 @@ program
     process.exit(result.exitCode);
   });
 
+// ── skills ────────────────────────────────────
+const skillsCmd = program
+  .command('skills')
+  .description('Manage AI agent skill content');
+
+skillsCmd
+  .command('list')
+  .description('List available skills')
+  .option('--json', 'Output as JSON')
+  .action(async (opts: { json?: boolean }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handleSkillsList(mergedConfig, {
+      json: opts.json ?? false,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+skillsCmd
+  .command('get')
+  .description('Get skill content')
+  .argument('[name]', 'Skill name')
+  .option('--full', 'Include full reference and supplementary content')
+  .option('--all', 'Output every available skill')
+  .action(async (name: string | undefined, opts: { full?: boolean; all?: boolean }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handleSkillsGet(name, mergedConfig, {
+      full: opts.full ?? false,
+      all: opts.all ?? false,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+skillsCmd
+  .command('path')
+  .description('Print skill directory path')
+  .argument('[name]', 'Skill name')
+  .action(async (name: string | undefined) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handleSkillsPath(name, mergedConfig);
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
 // ── Parse ─────────────────────────────────────
 program.parse(process.argv);
 
 // Helper: collect repeated --var values
 function collectVar(value: string, previous: string[]): string[] {
-  return previous.concat([value]);
+  return [...previous, value];
 }

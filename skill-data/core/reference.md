@@ -1,126 +1,127 @@
-# gitlab-ci-cli Command Reference
+---
+name: core
+description: Full command reference for gitlab-ci-cli
+---
 
-## Global Options
+# Command Reference
 
-| Option | Env Variable | Description |
-|--------|-------------|-------------|
-| `-V, --version` | | Show version number |
-| `-h, --help` | | Show help |
+## Global Flags
+
+| Flag | Description |
+|------|-------------|
+| `--gitlab-url <url>` | GitLab instance URL (default: https://gitlab.com) |
+| `--token <token>` | GitLab personal access token |
 
 ## Commands
 
-### `init`
+### init
+Initialize project configuration and verify environment.
 
-Initialize project configuration and verify the environment.
-
-```
-gitlab-ci-cli init                      # Create config, check Node.js
-gitlab-ci-cli init --force              # Overwrite existing config
-gitlab-ci-cli init --completion bash    # Generate bash completion
-gitlab-ci-cli init --completion zsh     # Generate zsh completion
+```bash
+gitlab-ci-cli init [--force] [--completion bash|zsh]
 ```
 
-**Checks performed:**
-- Node.js version >= 18.0.0
-- Creates `.gitlab-ci-cli.json` with default values
-- Generates shell completion script (optional)
+### upgrade
+Check for and apply CLI upgrades.
 
-### `upgrade`
-
-Check for and apply CLI upgrades from the npm registry.
-
-```
-gitlab-ci-cli upgrade                   # Check and upgrade
-gitlab-ci-cli upgrade --dry-run         # Check only, no upgrade
+```bash
+gitlab-ci-cli upgrade [--dry-run]
 ```
 
-**Behavior:**
-- Queries `https://registry.npmjs.org/gitlab-catalog-browser/latest`
-- Compares with installed version
-- Runs `npm install -g gitlab-catalog-browser@latest` on upgrade
-- Handles offline/unreachable registry gracefully
-- `--dry-run` shows what would be done without executing
-
-### `doctor`
-
+### doctor
 Run comprehensive environment diagnostics.
 
-```
-gitlab-ci-cli doctor                    # Human-readable output
-gitlab-ci-cli doctor --json             # Machine-readable JSON
-```
-
-**Checks performed:**
-| Check | What it validates |
-|-------|-------------------|
-| Node.js Version | >= 18.0.0 |
-| Configuration File | `.gitlab-ci-cli.json` exists and is valid JSON |
-| GitLab API Connectivity | Can reach the GitLab instance API |
-| GitLab Token | Token is valid (if configured) |
-
-**JSON output format:**
-```json
-{
-  "success": true,
-  "checks": [
-    { "name": "Node.js Version", "status": "pass", "message": "Node.js v22.22.2" }
-  ],
-  "summary": { "total": 4, "passed": 4, "failed": 0 }
-}
+```bash
+gitlab-ci-cli doctor [--json]
 ```
 
-### `catalog`
+### catalog list
+List all catalog components in a namespace.
 
-Browse GitLab CI/CD Catalog components.
-
-```
-gitlab-ci-cli catalog list --org <namespace>
-gitlab-ci-cli catalog list --org <namespace> --json
-gitlab-ci-cli catalog search <query>
-gitlab-ci-cli catalog info <full-path>
+```bash
+gitlab-ci-cli catalog list --org <namespace> [--json] [--page <n>] [--per-page <n>]
 ```
 
-### `component`
+### catalog search
+Search catalog components by keyword.
 
-Inspect CI/CD component schemas.
-
+```bash
+gitlab-ci-cli catalog search <query> [--json] [--page <n>] [--per-page <n>]
 ```
-gitlab-ci-cli component schema <full-path>
-gitlab-ci-cli component schema <full-path> --version <version>
-gitlab-ci-cli component inputs <full-path>
+
+### catalog info
+Show detailed information about a specific component.
+
+```bash
+gitlab-ci-cli catalog info <full-path> [--json]
+```
+
+### component schema
+Get the complete YAML specification of a component.
+
+```bash
+gitlab-ci-cli component schema <full-path> [--version <version>] [--output-file <path>]
+```
+
+### component inputs
+List all input parameters for a component.
+
+```bash
+gitlab-ci-cli component inputs <full-path> [--json]
+```
+
+### component workflows
+List workflow definitions for a component.
+
+```bash
 gitlab-ci-cli component workflows <full-path>
-gitlab-ci-cli component jobs <full-path>
 ```
 
-### `validate`
+### component jobs
+List job definitions for a component.
 
-Validate `.gitlab-ci.yml` files.
-
-```
-gitlab-ci-cli validate <file>
-gitlab-ci-cli validate --dry-run <file>
-gitlab-ci-cli validate --project <path> <file>
-gitlab-ci-cli validate --stdin
+```bash
+gitlab-ci-cli component jobs <full-path> [--with-artifacts]
 ```
 
-### `pipeline`
+### validate
+Validate a .gitlab-ci.yml pipeline configuration.
 
-Analyze pipeline structure and dependencies.
-
-```
-gitlab-ci-cli pipeline explain --jobs <list>
-gitlab-ci-cli pipeline trace --var <name>
-gitlab-ci-cli pipeline stages
-gitlab-ci-cli pipeline includes
-gitlab-ci-cli pipeline summary
+```bash
+gitlab-ci-cli validate <file> [--stdin] [--dry-run] [--project <path>] [--var <key=value>] [--json]
 ```
 
-### `skills`
+### pipeline explain
+Show job dependency graph for specified jobs.
 
-Manage agent skill content.
-
+```bash
+gitlab-ci-cli pipeline explain <file> --jobs <list> [--json]
 ```
-gitlab-ci-cli skills list
-gitlab-ci-cli skills get <name>
-gitlab-ci-cli skills path [name]
+
+### pipeline trace
+Trace variable usage across the pipeline.
+
+```bash
+gitlab-ci-cli pipeline trace <file> --var <name> [--json]
+```
+
+### pipeline stages
+List pipeline stages and their jobs.
+
+```bash
+gitlab-ci-cli pipeline stages <file> [--mermaid] [--json]
+```
+
+### pipeline includes
+Show include hierarchy of the pipeline.
+
+```bash
+gitlab-ci-cli pipeline includes <file> [--json]
+```
+
+### pipeline summary
+Generate a structured pipeline summary.
+
+```bash
+gitlab-ci-cli pipeline summary <file> [--json]
 ```

@@ -1,0 +1,29 @@
+stages: [build, test, deploy]
+
+variables:
+  APP_NAME: my-app
+
+build:
+  stage: build
+  script:
+    - echo "Building $APP_NAME"
+    - mkdir -p dist
+    - cp -r src/* dist/
+  artifacts:
+    paths: [dist/]
+    expire_in: 1 hour
+
+test:
+  stage: test
+  script:
+    - echo "Testing $APP_NAME"
+    - npm test
+  needs: [build]
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying $APP_NAME"
+  needs: [test]
+  when: manual
+  environment: production
