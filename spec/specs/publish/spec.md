@@ -56,29 +56,33 @@ AND reports results as a PR status check
 ### Requirement: npm Package Publishing
 
 WHEN a maintainer pushes a version tag matching `v*.*.*`,
-the publish workflow SHALL build, test, and publish the package to the npm registry.
+the publish workflow SHALL build, test, and publish the package to the npm registry via Trusted Publisher (OIDC).
 
 #### Scenario: Successful publish on version tag
 
 GIVEN a version tag `v0.2.0` pushed to the repository
-AND the `NPM_TOKEN` secret is configured in GitHub
+AND a Trusted Publisher is configured on npm for the `gitlab-catalog-browser` package
+AND the Trusted Publisher points to `github.com/kouassives/gitlab-catalog-browser` with workflow `publish.yml`
 WHEN the publish workflow triggers
 THEN the workflow checks out the repository at the tag
-AND sets up Node.js 20.x
+AND sets up Node.js 22.x
 AND runs `npm ci`
 AND runs `npm run build`
 AND runs `npm test`
-AND runs `npm publish --provenance` to publish to npm
+AND runs `npm publish --access public` to publish via OIDC
+AND npm automatically generates provenance attestations
 AND the published package includes all files listed in `package.json` `files` array
 AND the published version matches the tag version (without the `v` prefix)
+AND no `NPM_TOKEN` secret is required for authentication
 
-#### Scenario: Publish fails without npm token
+#### Scenario: Publish uses OIDC instead of token
 
-GIVEN the `NPM_TOKEN` secret is NOT configured in GitHub
-WHEN the publish workflow triggers
-THEN the workflow detects the missing token
-AND exits with status "failure" before attempting to publish
-AND displays a clear error message indicating the missing secret
+GIVEN a Trusted Publisher is configured for the package
+WHEN the publish workflow runs
+THEN the workflow has `id-token: write` permission
+AND the npm CLI authenticates via GitHub OIDC token
+AND no `NODE_AUTH_TOKEN` or `NPM_TOKEN` is needed
+AND provenance attestations are auto-generated
 
 #### Scenario: Publish fails on build error
 
