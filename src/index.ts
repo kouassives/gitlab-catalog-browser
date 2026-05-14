@@ -67,8 +67,12 @@ function loadPackageVersion(): string {
 const cliConfig: GitLabCIConfig = loadConfig();
 
 // Utility: merge CLI flag overrides into the loaded config
+// Filters out undefined values so they don't overwrite env-var/config-file values
 function overrideConfig(overrides: Partial<GitLabCIConfig>): GitLabCIConfig {
-  return { ...cliConfig, ...overrides };
+  const defined = Object.fromEntries(
+    Object.entries(overrides).filter(([_, v]) => v !== undefined)
+  ) as Partial<GitLabCIConfig>;
+  return { ...cliConfig, ...defined };
 }
 
 const program = new Command();
