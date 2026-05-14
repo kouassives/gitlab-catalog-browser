@@ -18,6 +18,8 @@ export interface LintValidateOptions {
   includeJobs?: boolean;
   /** Enable dry-run mode for rules evaluation */
   dryRun?: boolean;
+  /** Simulated CI/CD variables (key-value pairs) for dry-run evaluation */
+  variables?: Record<string, string>;
 }
 
 export interface LintError {
@@ -80,6 +82,10 @@ export class LintApi {
 
     if (options.dryRun) {
       body.dry = true;
+    }
+
+    if (options.variables && Object.keys(options.variables).length > 0) {
+      body.variables = options.variables;
     }
 
     // If a project is specified, use the project-specific lint endpoint
