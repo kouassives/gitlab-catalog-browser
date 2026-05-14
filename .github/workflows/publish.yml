@@ -34,5 +34,12 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Check OIDC token scope
+        run: |
+          echo "=== npm config ==="
+          npm config list
+          echo "=== npm token list ==="
+          npx -y token-list 2>/dev/null || echo "No token helper"
+
       - name: Publish to npm
         run: npm publish --provenance --access public
