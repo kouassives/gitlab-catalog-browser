@@ -18,10 +18,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           registry-url: https://registry.npmjs.org
 
@@ -33,9 +33,6 @@ jobs:
 
       - name: Test
         run: npm test
-
-      - name: Upgrade npm for OIDC support
-        run: npm install -g npm@latest
 
       - name: Publish to npm
         run: npm publish --provenance --access public
