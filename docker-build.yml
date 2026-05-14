@@ -1,9 +1,0 @@
-spec:
-  inputs:
-    image_name:
-      type: string
-      description: Docker image name
-jobs:
-  build:
-    stage: build
-    script: docker build -t $IMAGE_NAME .
