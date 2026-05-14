@@ -1,0 +1,38 @@
+stages: [build, test, push]
+
+variables:
+  DOCKER_DRIVER: overlay2
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+
+docker-build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE:$IMAGE_TAG .
+    - docker tag $CI_REGISTRY_IMAGE:$IMAGE_TAG $CI_REGISTRY_IMAGE:latest
+
+docker-test:
+  stage: test
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker run $CI_REGISTRY_IMAGE:$IMAGE_TAG npm test
+  needs: [docker-build]
+
+docker-push:
+  stage: push
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG
+    - docker push $CI_REGISTRY_IMAGE:latest
+  needs: [docker-test]
+  only:
+    - main
+  environment: production

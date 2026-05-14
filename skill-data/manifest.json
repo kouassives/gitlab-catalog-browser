@@ -1,0 +1,12 @@
+{
+  "skills": [
+    {
+      "name": "core",
+      "description": "Core workflow instructions for using gitlab-ci-cli to browse, validate, and manage GitLab CI/CD pipelines"
+    },
+    {
+      "name": "templates",
+      "description": "Pipeline template patterns including basic, multi-stage, and Docker build configurations"
+    }
+  ]
+}

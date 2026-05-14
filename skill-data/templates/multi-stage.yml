@@ -1,0 +1,43 @@
+stages: [build, test, staging, production]
+
+variables:
+  CI_IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+
+build:
+  stage: build
+  script:
+    - echo "Building image"
+    - docker build -t app:$CI_IMAGE_TAG .
+  artifacts:
+    paths: [Dockerfile]
+
+unit-test:
+  stage: test
+  script:
+    - echo "Running unit tests"
+    - docker run app:$CI_IMAGE_TAG npm test
+  needs: [build]
+
+integration-test:
+  stage: test
+  script:
+    - echo "Running integration tests"
+    - docker-compose -f ci/docker-compose.test.yml up --abort-on-container-exit
+  needs: [build]
+
+deploy-staging:
+  stage: staging
+  script:
+    - echo "Deploying to staging"
+    - kubectl set image deployment/app app=app:$CI_IMAGE_TAG
+  needs: [unit-test, integration-test]
+  environment: staging
+
+deploy-production:
+  stage: production
+  script:
+    - echo "Deploying to production"
+    - kubectl set image deployment/app app=app:$CI_IMAGE_TAG
+  needs: [deploy-staging]
+  when: manual
+  environment: production
