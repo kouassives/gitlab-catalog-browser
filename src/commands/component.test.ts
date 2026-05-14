@@ -93,6 +93,22 @@ vi.mock('../api/catalog.js', () => ({
   })),
 }));
 
+// Mock SchemaCache for cache-related tests
+const mockCacheGet = vi.hoisted(() => vi.fn());
+const mockCacheSet = vi.hoisted(() => vi.fn());
+
+vi.mock('../cache/schema-cache.js', () => ({
+  SchemaCache: vi.fn().mockImplementation(() => ({
+    get: mockCacheGet,
+    set: mockCacheSet,
+    remove: vi.fn(),
+    clear: vi.fn(),
+  })),
+  buildComponentCacheKey: vi.fn((path: string, version?: string) =>
+    version ? `component:${path}:${version}` : `component:${path}`
+  ),
+}));
+
 import { CatalogApi } from '../api/catalog.js';
 
 // ──────────────────────────────────────────────
@@ -263,5 +279,68 @@ describe('handleComponentJobs', () => {
     expect(result.exitCode).toBe(0);
     expect(result.output).toContain('Needs:');
     expect(result.output).toContain('build');
+  });
+});
+
+// ──────────────────────────────────────────────────────────
+// Schema Caching tests (3 spec scenarios)
+// ──────────────────────────────────────────────────────────
+
+describe('Schema Caching', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetComponentInfo(() => MOCK_DETAIL_WITH_ALL);
+  });
+
+  // Scenario 1: Cache hit — return cached result with note
+  it('Scenario: Cache schema results — should return cached data with (from cache) note', async () => {
+    const CACHED_SPEC = 'cached:\n  script: echo cached';
+    mockCacheGet.mockReturnValue({ data: { spec: CACHED_SPEC }, age: 1000 });
+
+    const result = await handleComponentSchema(
+      'to-be-continuous/docker-build',
+      defaultConfig
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.output).toContain('(from cache)');
+    expect(result.output).toContain(CACHED_SPEC);
+    // API should NOT have been called (cache hit means no API request)
+    expect(vi.mocked(CatalogApi).mock.results.length).toBe(0);
+  });
+
+  // Scenario 2: Cache miss → fetch from API and store
+  it('Scenario: Cache miss — should fetch from API and store in cache', async () => {
+    mockCacheGet.mockReturnValue(null); // cache miss
+
+    const result = await handleComponentSchema(
+      'to-be-continuous/docker-build',
+      defaultConfig
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.output).not.toContain('(from cache)');
+    // API should have been called
+    expect(mockCacheSet).toHaveBeenCalled();
+    // Should include spec data
+    expect(result.output).toContain('spec:');
+  });
+
+  // Scenario 3: Bypass cache with --no-cache
+  it('Scenario: Bypass cache — should fetch fresh data with --no-cache', async () => {
+    mockCacheGet.mockReturnValue({ data: { spec: 'old-cached-data' }, age: 100 });
+
+    const result = await handleComponentSchema(
+      'to-be-continuous/docker-build',
+      defaultConfig,
+      { noCache: true }
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.output).not.toContain('(from cache)');
+    // Should NOT check cache when --no-cache
+    expect(mockCacheGet).not.toHaveBeenCalled();
+    // Should NOT write to cache when --no-cache
+    expect(mockCacheSet).not.toHaveBeenCalled();
   });
 });

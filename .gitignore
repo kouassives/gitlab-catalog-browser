@@ -145,3 +145,5 @@ vite.config.ts.timestamp-*
 # gitlab-ci-cli generated config
 .gitlab-ci-cli.json
 .gitlab-ci-cli.json.bak
+.gitlab-ci-cli-cache.json
+docker-build.yml

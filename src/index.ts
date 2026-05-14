@@ -242,7 +242,8 @@ componentCmd
   .argument('<full-path>', 'Full component path (e.g. to-be-continuous/docker-build)')
   .option('--version <version>', 'Specific version to fetch')
   .option('--output-file <path>', 'Save schema to file')
-  .action(async (fullPath: string, options: { version?: string; outputFile?: string }) => {
+  .option('--no-cache', 'Bypass cache and fetch fresh data')
+  .action(async (fullPath: string, options: { version?: string; outputFile?: string; noCache?: boolean }) => {
     const mergedConfig = overrideConfig({
       gitlabUrl: program.opts().gitlabUrl || undefined,
       token: program.opts().token || undefined,
@@ -251,6 +252,7 @@ componentCmd
     const result = await handleComponentSchema(fullPath, mergedConfig, {
       version: options.version,
       outputFile: options.outputFile,
+      noCache: options.noCache ?? false,
     });
 
     console.log(result.output);

@@ -11,6 +11,7 @@ import { GitLabApiClient } from '../api/gitlab.js';
 import { renderTable, renderDetail, type TableRow } from '../output/table.js';
 import type { GitLabCIConfig } from '../config/types.js';
 import { NotFoundError } from '../types/api.js';
+import { SchemaCache, buildComponentCacheKey } from '../cache/schema-cache.js';
 
 // ──────────────────────────────────────────────
 // Types
@@ -19,6 +20,7 @@ import { NotFoundError } from '../types/api.js';
 export interface ComponentSchemaOptions {
   version?: string;
   outputFile?: string;
+  noCache?: boolean;
 }
 
 export interface ComponentInputsOptions {
@@ -47,10 +49,39 @@ export async function handleComponentSchema(
   options: ComponentSchemaOptions = {}
 ): Promise<{ exitCode: number; output: string }> {
   try {
+    // ── Check cache (unless --no-cache) ─────────
+    const cacheKey = buildComponentCacheKey(fullPath, options.version);
+
+    if (!options.noCache) {
+      const cache = new SchemaCache();
+      const cached = cache.get<{ spec?: string }>(cacheKey);
+      if (cached) {
+        const yamlContent = cached.data.spec ?? '# No schema available';
+        const output = `(from cache) ${yamlContent}`;
+
+        if (options.outputFile) {
+          writeFileSync(options.outputFile, yamlContent, 'utf-8');
+          return {
+            exitCode: 0,
+            output: `Schema saved to ${options.outputFile} (from cache)`,
+          };
+        }
+
+        return { exitCode: 0, output };
+      }
+    }
+
+    // ── Fetch from API ──────────────────────────
     const api = createCatalogApi(config);
     const component = await api.getComponentInfo(fullPath);
 
     const yamlContent = component.spec ?? '# No schema available';
+
+    // ── Store in cache ──────────────────────────
+    if (!options.noCache) {
+      const cache = new SchemaCache();
+      cache.set(cacheKey, { spec: yamlContent });
+    }
 
     if (options.outputFile) {
       writeFileSync(options.outputFile, yamlContent, 'utf-8');
