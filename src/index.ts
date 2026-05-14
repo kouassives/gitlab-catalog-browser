@@ -21,6 +21,11 @@ import {
   type UpgradeOptions,
   type DoctorOptions,
 } from './commands/setup.js';
+import {
+  handleCatalogList,
+  handleCatalogSearch,
+  handleCatalogInfo,
+} from './commands/catalog.js';
 import { loadConfig } from './config/loader.js';
 import type { GitLabCIConfig } from './config/types.js';
 
@@ -133,6 +138,76 @@ program
       );
     }
 
+    process.exit(result.exitCode);
+  });
+
+// ── catalog ──────────────────────────────────
+const catalogCmd = program
+  .command('catalog')
+  .description('Browse GitLab CI/CD Catalog components');
+
+catalogCmd
+  .command('list')
+  .description('List all catalog components in a namespace')
+  .requiredOption('--org <namespace>', 'GitLab namespace or organization')
+  .option('--json', 'Output as JSON')
+  .option('--page <n>', 'Page number', parseInt)
+  .option('--per-page <n>', 'Results per page', parseInt)
+  .action(async (options: { org: string; json?: boolean; page?: number; perPage?: number }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handleCatalogList(options.org, mergedConfig, {
+      json: options.json ?? false,
+      page: options.page,
+      perPage: options.perPage,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+catalogCmd
+  .command('search')
+  .description('Search catalog components by keyword')
+  .argument('<query>', 'Search keyword')
+  .option('--json', 'Output as JSON')
+  .option('--page <n>', 'Page number', parseInt)
+  .option('--per-page <n>', 'Results per page', parseInt)
+  .action(async (query: string, options: { json?: boolean; page?: number; perPage?: number }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handleCatalogSearch(query, mergedConfig, {
+      json: options.json ?? false,
+      page: options.page,
+      perPage: options.perPage,
+    });
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+catalogCmd
+  .command('info')
+  .description('Show detailed information about a specific component')
+  .argument('<full-path>', 'Full component path (e.g. to-be-continuous/docker-build)')
+  .option('--json', 'Output as JSON')
+  .action(async (fullPath: string, options: { json?: boolean }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handleCatalogInfo(fullPath, mergedConfig, {
+      json: options.json ?? false,
+    });
+
+    console.log(result.output);
     process.exit(result.exitCode);
   });
 
