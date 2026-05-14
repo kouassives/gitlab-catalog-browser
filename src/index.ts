@@ -45,6 +45,7 @@ import {
   handleSkillsGet,
   handleSkillsPath,
 } from './commands/skills.js';
+import { handleBatch } from './commands/batch.js';
 import { loadConfig } from './config/loader.js';
 import type { GitLabCIConfig } from './config/types.js';
 
@@ -500,6 +501,28 @@ skillsCmd
     });
 
     const result = await handleSkillsPath(name, mergedConfig);
+
+    console.log(result.output);
+    process.exit(result.exitCode);
+  });
+
+// ── batch ─────────────────────────────────────
+program
+  .command('batch')
+  .description('Execute multiple commands in sequence')
+  .argument('[commands...]', 'Commands to execute')
+  .option('--bail', 'Stop on first failure')
+  .option('--json', 'Read commands from stdin as JSON array')
+  .action(async (commands: string[] | undefined, opts: { bail?: boolean; json?: boolean }) => {
+    const mergedConfig = overrideConfig({
+      gitlabUrl: program.opts().gitlabUrl || undefined,
+      token: program.opts().token || undefined,
+    });
+
+    const result = await handleBatch(commands, mergedConfig, {
+      bail: opts.bail ?? false,
+      json: opts.json ?? false,
+    });
 
     console.log(result.output);
     process.exit(result.exitCode);
