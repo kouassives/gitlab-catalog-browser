@@ -62,7 +62,12 @@ the publish workflow SHALL build, test, and publish the package to the npm regis
 
 GIVEN a version tag `v0.2.0` pushed to the repository
 AND a Trusted Publisher is configured on npm for the `gitlab-catalog-browser` package
-AND the Trusted Publisher points to `github.com/kouassives/gitlab-catalog-browser` with workflow `publish.yml`
+AND the Trusted Publisher is configured with:
+  - Registry: `npmjs.org`
+  - Publisher: GitHub
+  - Repository: `kouassives/gitlab-catalog-browser`
+  - Workflow: `.github/workflows/publish.yml`
+AND the GitHub workflow has `id-token: write` permission
 WHEN the publish workflow triggers
 THEN the workflow checks out the repository at the tag
 AND sets up Node.js 22.x
