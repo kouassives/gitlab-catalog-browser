@@ -75,8 +75,8 @@ AND sets up Node.js 24.x
 AND runs `npm ci`
 AND runs `npm run build`
 AND runs `npm test`
-AND runs `npm publish --access public` to publish via OIDC
-AND provenance is disabled via `NPM_CONFIG_PROVENANCE=false` (private repo)
+AND runs `npm publish --provenance --access public` to publish via OIDC
+AND npm automatically generates provenance attestations (public repo)
 AND the published package includes all files listed in `package.json` `files` array
 AND the published version matches the tag version (without the `v` prefix)
 AND no `NODE_AUTH_TOKEN` or npm token is required for authentication
