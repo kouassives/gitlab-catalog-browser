@@ -1,0 +1,9 @@
+{
+  "component:to-be-continuous/docker-build": {
+    "data": {
+      "spec": "spec:\n  inputs:\n    image_name:\n      type: string\n      description: Docker image name\njobs:\n  build:\n    stage: build\n    script: docker build -t $IMAGE_NAME ."
+    },
+    "timestamp": 1778758359409,
+    "ttl": 300000
+  }
+}
