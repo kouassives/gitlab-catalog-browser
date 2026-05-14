@@ -66,7 +66,7 @@ AND the Trusted Publisher is configured with:
   - Registry: `npmjs.org`
   - Publisher: GitHub
   - Repository: `kouassives/gitlab-catalog-browser`
-  - Workflow: `.github/workflows/publish.yml`
+  - Workflow: `publish.yml` (just the filename, not the full path)
 AND the GitHub workflow has `id-token: write` permission
 WHEN the publish workflow triggers
 THEN the workflow checks out the repository at the tag
