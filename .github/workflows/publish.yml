@@ -34,5 +34,14 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Remove auth token (force OIDC auth instead)
+        run: |
+          # setup-node crée un .npmrc avec un token OIDC mais avec bypass_2fa=false
+          # On le supprime pour que npm utilise OIDC direct via --provenance
+          npm config delete //registry.npmjs.org/:_authToken 2>/dev/null || true
+          npm config set registry https://registry.npmjs.org
+          echo "=== npm config ==="
+          npm config list
+
       - name: Publish to npm
         run: npm publish --provenance --access public
