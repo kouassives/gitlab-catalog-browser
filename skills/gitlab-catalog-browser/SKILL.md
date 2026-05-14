@@ -1,6 +1,6 @@
 ---
 name: gitlab-catalog-browser
-description: GitLab CI/CD Catalog browsing and pipeline management CLI for AI agents. Use when the user needs to browse GitLab CI/CD components, inspect component schemas, validate .gitlab-ci.yml files, analyze pipeline structure, or manage GitLab CI/CD configurations. Triggers include requests to "browse the GitLab catalog", "list components", "validate a pipeline", "inspect a CI component", "check pipeline dependencies", "trace variables", or any task involving GitLab CI/CD pipeline management.
+description: Browse GitLab CI/CD Catalog, inspect component schemas, validate pipelines, and analyze CI/CD configurations via CLI. For AI agents managing GitLab CI/CD workflows.
 ---
 
 # gitlab-catalog-browser

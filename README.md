@@ -1,10 +1,38 @@
 # gitlab-catalog-browser
 
+[![npm](https://img.shields.io/npm/v/gitlab-catalog-browser)](https://www.npmjs.com/package/gitlab-catalog-browser)
+[![CI](https://github.com/kouassives/gitlab-catalog-browser/actions/workflows/ci.yml/badge.svg)](https://github.com/kouassives/gitlab-catalog-browser/actions/workflows/ci.yml)
+[![skills.sh](https://skills.sh/b/kouassives/gitlab-catalog-browser)](https://skills.sh/kouassives/gitlab-catalog-browser)
+
 CLI tool for AI agents to browse GitLab CI/CD Catalog, inspect component schemas, validate pipeline configurations, and analyze pipeline structure. Inspired by [agent-browser](https://github.com/vercel-labs/agent-browser).
 
 ## Status
 
 Pre-product — specification phase.
+
+## Installation
+
+```bash
+# Install globally via npm
+npm install -g gitlab-catalog-browser
+
+# Or install the agent skill for AI workflows
+npx skills add kouassives/gitlab-catalog-browser
+```
+
+## Release Process
+
+New versions are published to npm automatically via GitHub Actions using Trusted Publisher (OIDC) — no tokens required.
+
+```bash
+# 1. Update version
+npm version patch   # or minor, or major
+
+# 2. Push the commit and tag
+git push && git push --tags
+```
+
+The `publish.yml` workflow triggers on any tag matching `v*.*.*`, builds, tests, and publishes with provenance attestations.
 
 ## Spec-Driven Development
 
