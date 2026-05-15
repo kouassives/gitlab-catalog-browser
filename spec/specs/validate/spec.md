@@ -4,6 +4,31 @@
 
 This capability enables AI agents to validate `.gitlab-ci.yml` pipeline configurations using the GitLab CI Lint API. It provides syntax validation, rules evaluation via dry-run, and project-context-aware validation.
 
+## Key Concepts
+
+### Local file vs Project context
+
+The `validate` command takes two distinct inputs that serve different purposes:
+
+| Input | Role | Example |
+|-------|------|---------|
+| `<file>` argument | The **local file** being edited — the pipeline config you want to test | `validate .gitlab-ci.yml` |
+| `--project <id-or-path>` | The **GitLab project context** used by the CI Lint API to resolve includes, evaluate rules, and access project variables | `--project 80468771` |
+
+The `<file>` is **your working copy**, not yet committed or pushed. The `--project` is **not** the source of the file — the API does NOT fetch `.gitlab-ci.yml` from the project. It only uses the project as context to give an accurate validation verdict.
+
+### Why `--project` is required
+
+GitLab 14.0+ removed the global `/api/v4/ci/lint` endpoint. Every CI Lint request must now target a specific project:
+`/api/v4/projects/:id/ci/lint`. The project provides runners configuration, CI variables, and a scope for `include:` resolution.
+
+### Validation levels
+
+| Level | Requires | Catches |
+|-------|----------|---------|
+| **Local** (always runs) | Nothing — pure YAML parsing | Syntax errors, empty config, common typos (`scripts` → `script`) |
+| **API** (adds to local) | Token + `--project` | Include resolution, rules evaluation, variable expansion |
+
 ---
 
 ## Requirements
@@ -75,33 +100,40 @@ AND exits with code 0
 
 ### Requirement: Validate with Project Context
 
-WHEN a user provides a project path with the `--project` flag,
-the CLI SHALL use project-specific CI variables, includes, and settings for more accurate validation.
+WHEN a user provides a project ID or path with the `--project` flag,
+the CLI SHALL send the local file content to the project-specific CI Lint endpoint
+for more accurate validation that includes project variables, includes resolution, and rules evaluation.
+
+The `--project` value is **not** used to fetch a file from GitLab — it is only
+a context qualifier for the API. The file being validated is always the local
+`<file>` argument (or stdin with `--stdin`).
 
 #### Scenario: Validate with project variables
 
-GIVEN a GitLab project path "my-group/my-project"
-AND a `.gitlab-ci.yml` file that references project-level CI variables
-WHEN the user executes `gitlab-catalog-browser validate --project my-group/my-project .gitlab-ci.yml`
-THEN the CLI fetches the project's CI variables from the GitLab API
-AND includes them during validation
+GIVEN a local `.gitlab-ci.yml` file that references project-level CI variables
+AND a GitLab project path "my-group/my-project"
+WHEN the user executes `gitlab-catalog-browser validate .gitlab-ci.yml --project my-group/my-project`
+THEN the CLI sends the **local** file content to the project-specific CI Lint endpoint
+AND the API evaluates project variables against the local content
 AND returns results that reflect the project-specific context
 AND exits with code 0
 
 #### Scenario: Validate with project includes
 
-GIVEN a `.gitlab-ci.yml` file with `include:project` references
-WHEN the user executes `gitlab-catalog-browser validate --project my-group/my-project .gitlab-ci.yml`
-THEN the CLI resolves project includes against the specified project
+GIVEN a local `.gitlab-ci.yml` file with `include:project` references
+WHEN the user executes `gitlab-catalog-browser validate .gitlab-ci.yml --project my-group/my-project`
+THEN the CLI sends the **local** file content to the project-specific CI Lint endpoint
+AND the API resolves project includes against the specified project
 AND validates the fully resolved configuration
 AND exits with code 0
 
 #### Scenario: Validate with insufficient permissions
 
-GIVEN a project path for which the token lacks access
-WHEN the user executes `gitlab-catalog-browser validate --project private-group/private-project .gitlab-ci.yml`
+GIVEN a local `.gitlab-ci.yml` file
+AND a project path for which the token lacks access
+WHEN the user executes `gitlab-catalog-browser validate .gitlab-ci.yml --project private-group/private-project`
 THEN the CLI displays an error "Insufficient permissions to access project 'private-group/private-project'"
-AND falls back to standard validation without project context
+AND falls back to local-only validation (still validates the local file)
 AND exits with non-zero code
 
 ---
@@ -129,7 +161,7 @@ AND exits with code 0 or non-zero based on validity
 | `gitlab-catalog-browser validate <file>` | Validate .gitlab-ci.yml file |
 | `gitlab-catalog-browser validate --dry-run <file>` | Validate with rules evaluation |
 | `gitlab-catalog-browser validate --dry-run <file> --var <key=value>` | Dry-run with simulated variables |
-| `gitlab-catalog-browser validate --project <path> <file>` | Validate with project context |
+| `gitlab-catalog-browser validate <file> --project <id-or-path>` | Validate local file against project context (resolves includes, evaluates rules) |
 | `gitlab-catalog-browser validate --stdin` | Validate piped content |
 | `gitlab-catalog-browser validate <file> --json` | Output results as JSON |
 

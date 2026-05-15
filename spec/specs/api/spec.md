@@ -207,38 +207,44 @@ the lint API SHALL provide methods to submit YAML to the GitLab CI Lint endpoint
 via the authenticated REST client.
 
 *Note: GitLab 14.0+ removed the global `/api/v4/ci/lint` endpoint.
-A `project` is always required. Endpoints use the `/api/v4/` prefix.*
+A `project` is always required — it provides the context for include resolution,
+rules evaluation, and project variables. Endpoints use the `/api/v4/` prefix.*
+
+The `content` passed to `validate()` is the **local file content** being tested,
+not a file fetched from the project. The `project` option is only a context
+qualifier for the API endpoint.
 
 #### Scenario: Validate YAML content
 
-GIVEN a valid `.gitlab-ci.yml` content string
+GIVEN a valid `.gitlab-ci.yml` content string (from a local file)
 AND a project path "my-group/my-project"
 WHEN `validate(content, { project: "my-group/my-project" })` is called
 THEN the client sends a POST request to `/api/v4/projects/my-group%2Fmy-project/ci/lint`
 WITH JSON body `{ "content": "<yaml content>" }`
-AND returns a validation result with `status: "valid"`, empty `errors` array, and optional `warnings`
+AND returns a validation result with `valid: true`, empty `errors` array, and empty `warnings` array
 
 #### Scenario: Validate invalid YAML
 
-GIVEN a `.gitlab-ci.yml` with syntax errors
+GIVEN a `.gitlab-ci.yml` with syntax errors (from a local file)
 AND a project path "my-group/my-project"
 WHEN `validate(invalidContent, { project: "my-group/my-project" })` is called
 THEN the client sends the POST request
-AND returns a validation result with `status: "invalid"`, `errors` array (each with `line`, `column`, `message`), and optional `warnings`
+AND returns a validation result with `valid: false`, `errors` array of strings, and `warnings` array of strings
 
 #### Scenario: Validate with project context
 
 GIVEN a project path "my-group/my-project"
 WHEN `validate(content, { project: "my-group/my-project" })` is called
 THEN the client uses the project-specific lint endpoint `/api/v4/projects/:id/ci/lint`
-AND the API validates with the project's CI variables and includes context
+AND the API validates the **submitted content** against the **project's** CI variables, includes, and settings
+AND does NOT fetch a file from the project — the content argument is the local file content
 
 #### Scenario: Validate with dry-run rules evaluation
 
 GIVEN a pipeline with conditional `rules:` clauses
 AND a project path "my-group/my-project"
 WHEN `validate(content, { project: "my-group/my-project", dryRun: true })` is called
-THEN the client sends a POST request with `dry: true` in the body
+THEN the client sends a POST request with `dry_run: true` in the body
 AND the API returns which jobs would execute and which would be excluded
 
 #### Scenario: Missing project throws ConfigurationError
@@ -247,6 +253,7 @@ GIVEN no project path is specified
 WHEN `validate(content, {})` is called
 THEN the client throws a `ConfigurationError`
 AND the error message instructs the user to provide `--project`
+AND explains that the project is needed as API validation context (not as file source)
 
 ---
 
