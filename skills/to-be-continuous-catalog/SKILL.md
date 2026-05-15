@@ -1,7 +1,6 @@
 ---
 name: to-be-continuous-catalog
 description: Specialized skill for the to-be-continuous GitLab CI/CD component catalog. Use when the user needs to browse, inspect, or use components from the to-be-continuous organization. Triggers include requests to "use to-be-continuous components", "find a template for Docker/SonarQube/Kubernetes/Go/Python/etc", "set up CI/CD with to-be-continuous", "how to use the docker component", "list to-be-continuous templates", "what components does to-be-continuous provide", "configure a build with to-be-continuous", "deploy with to-be-continuous", "add testing to my pipeline with to-be-continuous", or any task involving the to-be-continuous GitLab CI/CD catalog. Prefer this skill over the generic gitlab-catalog-browser skill when the task is clearly scoped to to-be-continuous components.
-allowed-tools: Bash(npx gitlab-catalog-browser:*), Bash(gitlab-catalog-browser:*)
 ---
 
 # to-be-continuous-catalog
@@ -57,19 +56,8 @@ gitlab-catalog-browser component schema to-be-continuous/<name>
 gitlab-catalog-browser validate .gitlab-ci.yml --project <project-id>
 ```
 
-## Component categories at a glance
-
-| Category | Count | Examples |
-|----------|-------|---------|
-| Build | 18 | bash, golang, maven, python, node, gradle, rust, dotnet |
-| Docker / Container | 3 | docker, cnb, docker-compose |
-| Testing | 15 | cypress, playwright, postman, k6, hurl, robotframework |
-| SAST / Security | 5 | sonar, gitleaks, mobsf, defectdojo, dependency-track |
-| Deployment | 13 | kubernetes, helm, terraform, aws, gcloud, azure, ansible |
-| Release & Management | 5 | semantic-release, renovate, gitlab-package, gitlab-butler, ort |
-
-Run `gitlab-catalog-browser skills get to-be-continuous-catalog --full` for
-the complete component table with all 58+ components.
+Use `gitlab-catalog-browser catalog list --org to-be-continuous` to
+discover all available components with their descriptions.
 
 ## Common GitLab CI patterns
 
