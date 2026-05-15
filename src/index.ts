@@ -430,7 +430,7 @@ program
   .argument('[file]', 'Path to .gitlab-ci.yml file')
   .option('--stdin', 'Read pipeline content from stdin')
   .option('--dry-run', 'Evaluate rules and show which jobs would execute')
-  .option('--project <path>', 'GitLab project path for context-aware validation')
+  .option('--project <id-or-path>', 'Project ID (numeric) or namespace/project — context for CI Lint API (resolves includes, evaluates rules). Does NOT fetch the file from GitLab; validates the local <file> argument.')
   .option('--var <key=value>', 'Simulate CI/CD variables (repeatable)', collectVar, [] as string[])
   .option('--json', 'Output results as JSON')
   .action(async (file: string | undefined, opts: Record<string, unknown>) => {
