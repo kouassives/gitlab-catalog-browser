@@ -12,13 +12,13 @@ import { ConfigurationError } from '../types/api.js';
 // ──────────────────────────────────────────────
 
 const VALID_RESULT = {
-  status: 'valid' as const,
+  valid: true,
   errors: [],
   warnings: [],
 };
 
 const INVALID_RESULT = {
-  status: 'invalid' as const,
+  valid: false,
   errors: [
     { line: 3, column: 1, message: 'jobs config should contain at least one job' },
   ],
@@ -26,7 +26,7 @@ const INVALID_RESULT = {
 };
 
 const WARNINGS_RESULT = {
-  status: 'valid' as const,
+  valid: true,
   errors: [],
   warnings: [
     { line: 10, column: 5, message: 'job: build may be interrupted by a shutdown' },
@@ -34,14 +34,13 @@ const WARNINGS_RESULT = {
 };
 
 const DRY_RUN_RESULT = {
-  status: 'valid' as const,
+  valid: true,
   errors: [],
   warnings: [],
   jobs: [
     { name: 'build', stage: 'build', when: 'always', except_reason: null },
     { name: 'test', stage: 'test', when: 'never', except_reason: 'rules:except' },
   ],
-  valid: true,
 };
 
 // ──────────────────────────────────────────────
@@ -101,7 +100,7 @@ describe('LintApi', () => {
         project: 'my-group/my-project',
       });
 
-      expect(result.status).toBe('valid');
+      expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
 
       // Verify POST request
@@ -123,7 +122,7 @@ describe('LintApi', () => {
         project: 'my-group/my-project',
       });
 
-      expect(result.status).toBe('invalid');
+      expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
       expect(result.errors[0]).toHaveProperty('line');
       expect(result.errors[0]).toHaveProperty('message');
@@ -173,7 +172,7 @@ describe('LintApi', () => {
       // Verify dry: true in request body
       const [, opts] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
       const body = JSON.parse((opts as RequestInit).body as string);
-      expect(body.dry).toBe(true);
+      expect(body.dry_run).toBe(true);
     });
   });
 });

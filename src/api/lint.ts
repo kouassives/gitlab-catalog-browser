@@ -45,16 +45,16 @@ export interface LintJob {
 }
 
 export interface LintResult {
-  /** Validation status */
-  status: 'valid' | 'invalid';
+  /** Whether the pipeline is valid (GitLab API returns boolean `valid`) */
+  valid: boolean;
   /** List of errors (empty if valid) */
   errors: LintError[];
   /** List of warnings */
   warnings: LintWarning[];
   /** List of jobs (when include_jobs or dry_run is true) */
   jobs?: LintJob[];
-  /** Whether the pipeline is valid (for dry-run mode) */
-  valid?: boolean;
+  /** List of included files */
+  includes?: Array<{ type: string; location: string; blob?: string; raw?: string }>;
   /** Merged YAML configuration */
   merged_yaml?: string;
 }
@@ -93,7 +93,7 @@ export class LintApi {
     }
 
     if (options.dryRun) {
-      body.dry = true;
+      body.dry_run = true;
     }
 
     if (options.variables && Object.keys(options.variables).length > 0) {

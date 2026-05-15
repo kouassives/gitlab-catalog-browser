@@ -130,7 +130,7 @@ function formatTextResult(ctx: FormatContext): string {
   // ── API validation section ──
   if (ctx.api) {
     lines.push(section('GitLab CI API validation'));
-    const isValid = ctx.api.status === 'valid' && (ctx.api.valid ?? true);
+    const isValid = ctx.api.valid === true;
     lines.push(`${isValid ? '✓' : '✗'} Pipeline configuration is ${isValid ? 'valid' : 'invalid'}`);
 
     if (ctx.project) {
@@ -196,8 +196,8 @@ function formatJsonResult(ctx: FormatContext): string {
 
   if (ctx.api) {
     payload.api = {
-      success: ctx.api.status === 'valid' && (ctx.api.valid ?? true),
-      status: ctx.api.status,
+      success: ctx.api.valid === true,
+      status: ctx.api.valid ? 'valid' : 'invalid',
       errors: ctx.api.errors,
       warnings: ctx.api.warnings,
       jobs: ctx.api.jobs,
@@ -220,7 +220,7 @@ function formatJsonResult(ctx: FormatContext): string {
 
   payload.success =
     ctx.local.status === 'valid' &&
-    (ctx.api ? ctx.api.status === 'valid' && (ctx.api.valid ?? true) : true);
+    (ctx.api ? ctx.api.valid === true : true);
 
   return JSON.stringify(payload, null, 2);
 }
@@ -311,7 +311,7 @@ export async function handleValidate(
   // - If only local check: valid only if local check passes
   const exitCode =
     apiResult
-      ? (apiResult.status === 'valid' && (apiResult.valid ?? true) ? 0 : 1)
+      ? (apiResult.valid === true ? 0 : 1)
       : (localResult.status === 'valid' ? 0 : 1);
 
   return { exitCode, output };

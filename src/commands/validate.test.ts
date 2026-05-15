@@ -53,13 +53,13 @@ vi.mock('../api/lint.js', () => ({
 // ──────────────────────────────────────────────
 
 const MOCK_VALID_RESULT = {
-  status: 'valid' as const,
+  valid: true,
   errors: [],
   warnings: [],
 };
 
 const MOCK_INVALID_RESULT = {
-  status: 'invalid' as const,
+  valid: false,
   errors: [
     { line: 3, column: 1, message: 'jobs config should contain at least one job' },
     { line: 5, column: 3, message: 'unknown key: blah' },
@@ -68,7 +68,7 @@ const MOCK_INVALID_RESULT = {
 };
 
 const MOCK_WARNINGS_RESULT = {
-  status: 'valid' as const,
+  valid: true,
   errors: [],
   warnings: [
     { line: 10, column: 5, message: 'job: build may be interrupted by a shutdown' },
@@ -76,7 +76,7 @@ const MOCK_WARNINGS_RESULT = {
 };
 
 const MOCK_DRY_RUN_RESULT = {
-  status: 'valid' as const,
+  valid: true,
   errors: [],
   warnings: [],
   jobs: [
@@ -84,7 +84,6 @@ const MOCK_DRY_RUN_RESULT = {
     { name: 'test', stage: 'test', when: 'never', except_reason: 'rules:except' },
     { name: 'deploy', stage: 'deploy', when: 'manual', except_reason: null },
   ],
-  valid: true,
 };
 
 // ──────────────────────────────────────────────
