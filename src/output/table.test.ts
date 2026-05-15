@@ -56,6 +56,24 @@ describe('renderTable', () => {
     // Count column should be right-aligned
     expect(lines[2]).toMatch(/item\s+\d+/);
   });
+
+  it('should strip newlines from cell values', () => {
+    const result = renderTable(
+      [{ header: 'Name' }, { header: 'Description' }],
+      [{ Name: 'flux-cd', Description: 'line1\r\nline2 still same line' }]
+    );
+
+    const lines = result.split('\n');
+    // Table has 3 lines: header + separator + 1 data row
+    expect(lines).toHaveLength(3);
+    // Description should be on the same line as Name (no line break from \r\n)
+    expect(lines[2]).toContain('flux-cd');
+    expect(lines[2]).toContain('line1');
+    expect(lines[2]).toContain('line2 still same line');
+    // Should NOT contain the raw newline
+    expect(lines[2]).not.toContain('\r\n');
+    expect(lines[2]).not.toContain('\n');
+  });
 });
 
 describe('renderDetail', () => {

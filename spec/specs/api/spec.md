@@ -2,16 +2,68 @@
 
 ## Overview
 
-This capability provides the base HTTP client for communicating with GitLab API instances, the Catalog API for browsing CI/CD components, and the CI Lint API for validating pipeline configurations.
+This capability provides HTTP clients for communicating with GitLab instances:
+- **GraphQL API Client** for CI/CD Catalog queries (no token needed for public resources)
+- **REST API Client** for CI Lint validation (token required)
+- **Catalog API** for browsing CI/CD components via GraphQL
+- **CI Lint API** for validating pipeline configurations via REST
 
 ---
 
 ## Requirements
 
-### Requirement: GitLab API Base Client
+### Requirement: GraphQL API Client
 
-WHEN any command needs to communicate with a GitLab instance,
-the base API client SHALL provide authenticated HTTP request methods with configurable base URL, timeout, and structured error handling.
+WHEN a command needs to query GitLab CI/CD Catalog resources via GraphQL,
+the GraphQL API client SHALL provide a query method that sends POST requests
+to the GitLab GraphQL endpoint without requiring authentication for public resources.
+
+#### Scenario: Query public catalog resource without token
+
+GIVEN no GitLab token is configured
+WHEN a command performs a `query()` call to fetch public catalog data
+THEN the client sends a POST request to `/api/graphql`
+AND does NOT include an `Authorization` header
+AND returns the parsed `data` field from the GraphQL response
+AND does NOT throw a `ConfigurationError`
+
+#### Scenario: Query with authentication (optional token)
+
+GIVEN a valid GitLab token is configured via config file or `GITLAB_CI_CLI_TOKEN` env var
+WHEN a command performs a `query()` call
+THEN the client includes `Authorization: Bearer <token>` in the request headers
+AND returns the parsed `data` field
+
+#### Scenario: GraphQL HTTP error handling
+
+GIVEN the GitLab GraphQL endpoint returns an HTTP error (4xx or 5xx)
+WHEN a command performs a `query()` call
+THEN the client throws the appropriate error type
+AND does not retry the request
+
+#### Scenario: GraphQL resource not found
+
+GIVEN a `ciCatalogResource(fullPath:)` query for a nonexistent path
+WHEN the client receives a GraphQL error indicating the resource does not exist
+THEN the client throws a `NotFoundError`
+AND includes the resource path in the error message
+
+#### Scenario: GraphQL network error
+
+GIVEN the GitLab instance is unreachable
+WHEN a command performs a `query()` call
+THEN the client catches the network error
+AND throws a `NetworkError`
+
+---
+
+### Requirement: GitLab API Base Client (REST)
+
+WHEN a command needs to communicate with a GitLab instance using REST API endpoints,
+the base REST client SHALL provide authenticated HTTP request methods
+with configurable base URL, timeout, and structured error handling.
+
+NOTE: This client requires a token and is used only by the CI Lint API.
 
 #### Scenario: Authenticated GET request
 
@@ -96,47 +148,41 @@ AND includes a message "Unable to reach GitLab instance at <url>"
 #### Scenario: No token configured
 
 GIVEN no token is provided via config file, env var, or CLI flag
-WHEN a command sends an API request
+WHEN a command sends an API request through the REST client
 THEN the client detects that no token is configured
 AND throws a `ConfigurationError`
 AND suggests setting `GITLAB_CI_CLI_TOKEN` or adding `token` to the config file
-
-#### Scenario: Paginated GET request
-
-GIVEN an endpoint that supports pagination via `page` and `per_page` query parameters
-WHEN a command requests a paginated resource
-THEN the client accepts optional `page` and `perPage` parameters
-AND passes them as query parameters to the API
-AND returns the response with metadata (current page, total pages if available)
 
 ---
 
 ### Requirement: Catalog API Methods
 
 WHEN a command needs to query GitLab CI/CD Catalog components,
-the catalog API SHALL provide typed methods for listing, searching, and fetching component details.
+the catalog API SHALL provide typed methods for listing, searching,
+and fetching component details using the GraphQL API.
 
 #### Scenario: List components for a namespace
 
 GIVEN a GitLab namespace "to-be-continuous"
 WHEN `listComponents("to-be-continuous", { page: 1, perPage: 20 })` is called
-THEN the client sends a GET request to the catalog components endpoint
+THEN the client sends a GraphQL query `group(fullPath:)` to `/api/graphql`
+AND filters results by `isCatalogResource: true`
 AND returns an array of `CatalogComponent` objects
-AND each object contains `name`, `full_path`, `version`, `description`, `latest_tag`
+AND each object contains `name`, `full_path`, `description`
 
 #### Scenario: Search components by keyword
 
 GIVEN a search query "docker build"
 WHEN `searchComponents("docker build", { page: 1, perPage: 20 })` is called
-THEN the client sends a GET request with the search parameter
+THEN the client sends a GraphQL query with the search parameter
 AND returns matching `CatalogComponent` objects
 
 #### Scenario: Get component info
 
-GIVEN a component with full path "to-be-continuous/docker-build"
-WHEN `getComponentInfo("to-be-continuous/docker-build")` is called
-THEN the client sends a GET request to the component info endpoint
-AND returns a `CatalogComponentDetail` object with full specification
+GIVEN a component with full path "to-be-continuous/docker"
+WHEN `getComponentInfo("to-be-continuous/docker")` is called
+THEN the client sends a GraphQL query `ciCatalogResource(fullPath:)` with versions and components
+AND returns a `CatalogComponentDetail` object with inputs, jobs, and workflows
 
 #### Scenario: List components with empty namespace
 
@@ -149,15 +195,16 @@ AND does not throw an error
 
 GIVEN a component path that does not exist
 WHEN `getComponentInfo("nonexistent/component")` is called
-THEN the base client throws a `NotFoundError`
-AND the catalog method does not catch it (propagates to the caller)
+THEN the GraphQL client throws a `NotFoundError`
+AND the catalog method propagates it to the caller
 
 ---
 
 ### Requirement: CI Lint API Methods
 
 WHEN a command needs to validate GitLab CI pipeline YAML,
-the lint API SHALL provide methods to submit YAML to the GitLab CI Lint endpoint.
+the lint API SHALL provide methods to submit YAML to the GitLab CI Lint endpoint
+via the authenticated REST client.
 
 #### Scenario: Validate YAML content
 

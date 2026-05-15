@@ -7,7 +7,7 @@
 
 import { writeFileSync } from 'node:fs';
 import { CatalogApi } from '../api/catalog.js';
-import { GitLabApiClient } from '../api/gitlab.js';
+import { GraphQLApiClient } from '../api/graphql.js';
 import { renderTable, renderDetail, type TableRow } from '../output/table.js';
 import type { GitLabCIConfig } from '../config/types.js';
 import { NotFoundError } from '../types/api.js';
@@ -32,7 +32,13 @@ export interface ComponentInputsOptions {
 // ──────────────────────────────────────────────
 
 function createCatalogApi(config: Partial<GitLabCIConfig>): CatalogApi {
-  const client = new GitLabApiClient(config);
+  // Do NOT pass config.token — Catalog API is public via GraphQL.
+  // An expired/invalid token would cause 401 errors even for public resources.
+  // Keep gitlabUrl and timeout for self-managed GitLab instances.
+  const client = new GraphQLApiClient({
+    gitlabUrl: config.gitlabUrl,
+    timeout: config.timeout,
+  });
   return new CatalogApi(client);
 }
 
