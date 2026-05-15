@@ -1,15 +1,21 @@
 /**
  * Pipeline validation command handlers.
  *
- * Implements `validate` command with support for dry-run, project context,
- * simulated variables, stdin input, and JSON output.
+ * Implements `validate` command with hybrid validation flow:
+ *   1. Local YAML syntax + basic structure check (always, no token needed)
+ *   2. Full API validation (if token + project available)
+ *
+ * Hybrid flow ensures users always get useful feedback, even without
+ * GitLab credentials.
  */
 
 import { readFileSync } from 'node:fs';
 import { LintApi } from '../api/lint.js';
 import { GitLabApiClient } from '../api/gitlab.js';
 import type { GitLabCIConfig } from '../config/types.js';
-import { AuthenticationError, PermissionError } from '../types/api.js';
+import { AuthenticationError, PermissionError, ConfigurationError } from '../types/api.js';
+import { validateLocal } from '../validate/local.js';
+import type { LocalValidationResult } from '../validate/local.js';
 
 // ──────────────────────────────────────────────
 // Types
@@ -65,106 +71,158 @@ function parseVars(vars: string[] | undefined): Record<string, string> | undefin
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
-// ──────────────────────────────────────────────
-// Output formatting
-// ──────────────────────────────────────────────
-
-interface FormatOptions {
-  dryRun?: boolean;
-  vars?: Record<string, string>;
-  project?: string;
+/**
+ * Format multiple validation errors/warnings into a compact summary.
+ */
+function formatLocalIssues(
+  label: string,
+  items: Array<{ line?: number; column?: number; message: string }>
+): string[] {
+  if (items.length === 0) return [];
+  const lines: string[] = [`${label}:`];
+  for (const item of items) {
+    const loc = item.line ? `Line ${item.line}${item.column ? `, col ${item.column}` : ''}` : '';
+    lines.push(`  ${loc ? `${loc}: ` : ''}${item.message}`);
+  }
+  return lines;
 }
 
 /**
- * Format a validation result for text display.
+ * Format a section header for the output.
  */
-function formatTextResult(
-  result: import('../api/lint.js').LintResult,
-  options: FormatOptions
-): string {
+function section(title: string): string {
+  return `\n── ${title} ──`;
+}
+
+// ──────────────────────────────────────────────
+// Output formatting — Text
+// ──────────────────────────────────────────────
+
+interface FormatContext {
+  local: LocalValidationResult;
+  api?: import('../api/lint.js').LintResult;
+  apiError?: string;
+  project?: string;
+  dryRun?: boolean;
+  vars?: Record<string, string>;
+}
+
+/**
+ * Format hybrid validation results for text display.
+ */
+function formatTextResult(ctx: FormatContext): string {
   const lines: string[] = [];
 
-  // Title
-  const isValid = result.status === 'valid' && (result.valid ?? true);
-  if (isValid) {
-    lines.push('Pipeline configuration is valid');
+  // ── Local validation summary ──
+  const localOk = ctx.local.status === 'valid';
+  lines.push(`${localOk ? '✓' : '✗'} YAML syntax: ${ctx.local.status}`);
+  if (!ctx.local.looksLikeGitLabCI) {
+    lines.push('⚠  No GitLab CI/CD keywords detected — this may not be a .gitlab-ci.yml file');
+  }
+
+  if (ctx.local.errors.length > 0) {
+    lines.push(...formatLocalIssues('  Errors', ctx.local.errors));
+  }
+  if (ctx.local.warnings.length > 0) {
+    lines.push(...formatLocalIssues('  Warnings', ctx.local.warnings));
+  }
+
+  // ── API validation section ──
+  if (ctx.api) {
+    lines.push(section('GitLab CI API validation'));
+    const isValid = ctx.api.status === 'valid' && (ctx.api.valid ?? true);
+    lines.push(`${isValid ? '✓' : '✗'} Pipeline configuration is ${isValid ? 'valid' : 'invalid'}`);
+
+    if (ctx.project) {
+      lines.push(`  Project context: ${ctx.project}`);
+    }
+    if (ctx.dryRun) {
+      lines.push('  Dry-run mode: rules evaluated');
+    }
+
+    if (ctx.api.errors.length > 0) {
+      lines.push(...formatLocalIssues('  Errors', ctx.api.errors));
+    }
+    if (ctx.api.warnings.length > 0) {
+      lines.push(...formatLocalIssues('  Warnings', ctx.api.warnings));
+    }
+    if (ctx.api.jobs && ctx.api.jobs.length > 0) {
+      lines.push('  Jobs:');
+      for (const job of ctx.api.jobs) {
+        const willRun = job.when !== 'never' && job.when !== 'manual';
+        const icon = willRun ? '✅' : '❌';
+        const reason = job.except_reason ? ` (${job.except_reason})` : '';
+        lines.push(`    ${icon} ${job.name}  stage: ${job.stage}${reason}`);
+      }
+    }
+  } else if (ctx.apiError) {
+    lines.push(section('GitLab CI API validation — failed'));
+    lines.push(`  ${ctx.apiError}`);
   } else {
-    lines.push('Pipeline configuration is invalid');
-  }
-
-  // Show context
-  if (options.project) {
-    lines.push(`Project context: ${options.project}`);
-  }
-  if (options.dryRun) {
-    lines.push('Dry-run mode: rules evaluated');
-  }
-  if (options.vars && Object.keys(options.vars).length > 0) {
-    lines.push(
-      `Simulated variables: ${Object.entries(options.vars)
-        .map(([k, v]) => `${k}=${v}`)
-        .join(', ')}`
-    );
-  }
-
-  // Errors
-  if (result.errors.length > 0) {
-    lines.push('');
-    lines.push('Errors:');
-    for (const err of result.errors) {
-      const loc = err.line ? `Line ${err.line}${err.column ? `, col ${err.column}` : ''}` : '';
-      lines.push(`  ${loc ? `${loc}: ` : ''}${err.message}`);
+    // No API credentials — show setup instructions
+    lines.push(section('API validation not configured'));
+    lines.push('  For full validation (includes, rules, variables):');
+    if (!ctx.project) {
+      lines.push('    1. Specify a project: --project <namespace/project>');
     }
-  }
-
-  // Warnings
-  if (result.warnings.length > 0) {
-    lines.push('');
-    lines.push('Warnings:');
-    for (const warn of result.warnings) {
-      const loc = warn.line ? `Line ${warn.line}${warn.column ? `, col ${warn.column}` : ''}` : '';
-      lines.push(`  ${loc ? `${loc}: ` : ''}${warn.message}`);
-    }
-  }
-
-  // Jobs (dry-run or includeJobs)
-  if (result.jobs && result.jobs.length > 0) {
-    lines.push('');
-    lines.push('Jobs:');
-    for (const job of result.jobs) {
-      const willRun = job.when !== 'never' && job.when !== 'manual';
-      const icon = willRun ? '✅' : '❌';
-      const reason = job.except_reason ? ` (${job.except_reason})` : '';
-      lines.push(`  ${icon} ${job.name}  stage: ${job.stage}${reason}`);
+    if (!ctx.project || true) { // always show token info
+      lines.push('    2. Provide a GitLab API token:');
+      lines.push('       export GITLAB_CI_CLI_TOKEN=glpat-xxxx');
+      lines.push('       # Or set GITLAB_TOKEN if you already have it');
+      lines.push('    3. Create a token at:');
+      lines.push('       https://gitlab.com/-/profile/personal_access_tokens');
     }
   }
 
   return lines.join('\n');
 }
 
+// ──────────────────────────────────────────────
+// Output formatting — JSON
+// ──────────────────────────────────────────────
+
 /**
- * Format a validation result as JSON.
+ * Format hybrid validation results as JSON.
  */
-function formatJsonResult(
-  result: import('../api/lint.js').LintResult,
-  options: FormatOptions
-): string {
-  return JSON.stringify(
-    {
-      success: result.status === 'valid',
-      status: result.status,
-      errors: result.errors,
-      warnings: result.warnings,
-      jobs: result.jobs,
-      context: {
-        project: options.project ?? null,
-        dryRun: options.dryRun ?? false,
-        vars: options.vars ?? null,
-      },
+function formatJsonResult(ctx: FormatContext): string {
+  const payload: Record<string, unknown> = {
+    local: {
+      status: ctx.local.status,
+      errors: ctx.local.errors,
+      warnings: ctx.local.warnings,
+      looksLikeGitLabCI: ctx.local.looksLikeGitLabCI,
     },
-    null,
-    2
-  );
+  };
+
+  if (ctx.api) {
+    payload.api = {
+      success: ctx.api.status === 'valid' && (ctx.api.valid ?? true),
+      status: ctx.api.status,
+      errors: ctx.api.errors,
+      warnings: ctx.api.warnings,
+      jobs: ctx.api.jobs,
+      context: {
+        project: ctx.project ?? null,
+        dryRun: ctx.dryRun ?? false,
+      },
+    };
+  } else if (ctx.apiError) {
+    payload.api = { error: ctx.apiError };
+  } else {
+    const hints: string[] = [];
+    if (!ctx.project) hints.push('--project <namespace/project>');
+    hints.push('GITLAB_CI_CLI_TOKEN or GITLAB_TOKEN');
+    payload.api = {
+      message: 'API validation requires a token and project',
+      hints,
+    };
+  }
+
+  payload.success =
+    ctx.local.status === 'valid' &&
+    (ctx.api ? ctx.api.status === 'valid' && (ctx.api.valid ?? true) : true);
+
+  return JSON.stringify(payload, null, 2);
 }
 
 // ──────────────────────────────────────────────
@@ -173,90 +231,88 @@ function formatJsonResult(
 
 /**
  * Handle `validate <file>` or `validate --stdin`.
+ *
+ * Hybrid flow:
+ *   1. Always performs local YAML syntax + structure check
+ *   2. If token + project available, calls GitLab CI Lint API for full validation
+ *   3. If API not available, shows local results with setup instructions
  */
 export async function handleValidate(
   filePath: string | undefined,
   config: Partial<GitLabCIConfig>,
   options: ValidateOptions = {}
 ): Promise<{ exitCode: number; output: string }> {
-  try {
-    // ── Read pipeline content ──────────────────
-    let content: string;
-    if (options.stdin) {
-      content = await readStdin();
-    } else if (filePath) {
-      try {
-        content = readFileSync(filePath, 'utf-8');
-      } catch {
-        return {
-          exitCode: 1,
-          output: options.json
-            ? JSON.stringify({ success: false, error: { message: `File '${filePath}' not found` } })
-            : `File '${filePath}' not found`,
-        };
-      }
-    } else {
+  // ── Read pipeline content ──────────────────
+  let content: string;
+  if (options.stdin) {
+    content = await readStdin();
+  } else if (filePath) {
+    try {
+      content = readFileSync(filePath, 'utf-8');
+    } catch {
       return {
         exitCode: 1,
         output: options.json
-          ? JSON.stringify({ success: false, error: { message: 'No input provided. Specify a file or use --stdin.' } })
-          : 'No input provided. Specify a file or use --stdin.',
+          ? JSON.stringify({ success: false, error: { message: `File '${filePath}' not found` } })
+          : `File '${filePath}' not found`,
       };
     }
-
-    // ── Build API options ──────────────────────
-    const variables = parseVars(options.vars);
-
-    const api = createLintApi(config);
-    const result = await api.validate(content, {
-      project: options.project,
-      dryRun: options.dryRun,
-      variables,
-      includeJobs: options.dryRun, // include jobs when dry-run
-    });
-
-    // ── Format output ──────────────────────────
-    const formatOptions: FormatOptions = {
-      dryRun: options.dryRun,
-      vars: variables,
-      project: options.project,
+  } else {
+    return {
+      exitCode: 1,
+      output: options.json
+        ? JSON.stringify({ success: false, error: { message: 'No input provided. Specify a file or use --stdin.' } })
+        : 'No input provided. Specify a file or use --stdin.',
     };
-
-    const output = options.json
-      ? formatJsonResult(result, formatOptions)
-      : formatTextResult(result, formatOptions);
-
-    // Exit code: 0 if valid, non-zero if invalid
-    const exitCode =
-      result.status === 'valid' && (result.valid ?? true) ? 0 : 1;
-
-    return { exitCode, output };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-
-    // Handle permission errors gracefully
-    if (err instanceof AuthenticationError || err instanceof PermissionError) {
-      const userMessage = options.project
-        ? `Insufficient permissions to access project '${options.project}'`
-        : `Authentication failed: ${message}`;
-
-      if (options.json) {
-        return {
-          exitCode: 1,
-          output: JSON.stringify({ success: false, error: { message: userMessage } }),
-        };
-      }
-      return { exitCode: 1, output: userMessage };
-    }
-
-    // Generic error
-    const userMessage = `Error: ${message}`;
-    if (options.json) {
-      return {
-        exitCode: 1,
-        output: JSON.stringify({ success: false, error: { message: userMessage } }),
-      };
-    }
-    return { exitCode: 1, output: userMessage };
   }
+
+  // ── Step 1: Always validate locally ────────
+  const localResult = validateLocal(content);
+
+  // ── Step 2: API validation (if possible) ───
+  const variables = parseVars(options.vars);
+  let apiResult: import('../api/lint.js').LintResult | undefined;
+  let apiError: string | undefined;
+
+  if (config.token && options.project) {
+    try {
+      const api = createLintApi(config);
+      apiResult = await api.validate(content, {
+        project: options.project,
+        dryRun: options.dryRun,
+        variables,
+        includeJobs: options.dryRun,
+      });
+    } catch (err) {
+      if (err instanceof AuthenticationError || err instanceof PermissionError) {
+        apiError = `Authentication failed: ${err.message}`;
+      } else if (err instanceof ConfigurationError) {
+        apiError = err.message;
+      } else {
+        apiError = err instanceof Error ? err.message : String(err);
+      }
+    }
+  }
+
+  // ── Step 3: Format output ──────────────────
+  const ctx: FormatContext = {
+    local: localResult,
+    api: apiResult,
+    apiError,
+    project: options.project,
+    dryRun: options.dryRun,
+    vars: variables,
+  };
+
+  const output = options.json ? formatJsonResult(ctx) : formatTextResult(ctx);
+
+  // Determine exit code:
+  // - If API was called: use its verdict
+  // - If only local check: valid only if local check passes
+  const exitCode =
+    apiResult
+      ? (apiResult.status === 'valid' && (apiResult.valid ?? true) ? 0 : 1)
+      : (localResult.status === 'valid' ? 0 : 1);
+
+  return { exitCode, output };
 }

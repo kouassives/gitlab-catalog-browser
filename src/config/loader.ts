@@ -238,6 +238,22 @@ export function getConfig(cliFlags?: CliFlagOverrides): ResolvedConfig {
     }
   }
 
+  // Fallback token discovery: only used when no token was configured through
+  // normal channels (file, GITLAB_CI_CLI_TOKEN, or --token).
+  // This allows auto-detection from common GitLab env vars without
+  // overriding explicit user configuration.
+  if (!config.token) {
+    const fallbackTokenVars = ['GITLAB_TOKEN', 'CI_JOB_TOKEN'];
+    for (const envVar of fallbackTokenVars) {
+      const raw = process.env[envVar];
+      if (raw && raw !== '') {
+        config.token = raw;
+        track('token', 'env-var');
+        break;
+      }
+    }
+  }
+
   // 4. CLI flags
   if (cliFlags) {
     for (const [key, value] of Object.entries(cliFlags)) {

@@ -1,6 +1,6 @@
 {
   "name": "gitlab-catalog-browser",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "CLI tool for AI agents to browse GitLab CI/CD Catalog, inspect component schemas, and validate pipeline configurations",
   "type": "module",
   "bin": {

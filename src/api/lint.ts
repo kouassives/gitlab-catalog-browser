@@ -6,6 +6,7 @@
  */
 
 import { GitLabApiClient } from './gitlab.js';
+import { ConfigurationError } from '../types/api.js';
 
 // ──────────────────────────────────────────────
 // Types
@@ -68,10 +69,21 @@ export class LintApi {
   /**
    * Validate a .gitlab-ci.yml content string using the GitLab CI Lint API.
    *
+   * Note: GitLab 14.0+ requires authentication and a project context for CI lint.
+   * The global `/api/v4/ci/lint` endpoint has been removed on modern GitLab.
+   * A `project` option is always required.
+   *
    * @param content - The YAML content to validate
-   * @param options - Validation options (project context, dry-run, etc.)
+   * @param options - Validation options (project context required, dry-run, etc.)
    */
   async validate(content: string, options: LintValidateOptions = {}): Promise<LintResult> {
+    if (!options.project) {
+      throw new ConfigurationError(
+        'A project path is required for CI lint validation. ' +
+        'Use --project <namespace/project> or set it in your config file.'
+      );
+    }
+
     const body: Record<string, unknown> = {
       content,
     };
@@ -88,10 +100,7 @@ export class LintApi {
       body.variables = options.variables;
     }
 
-    // If a project is specified, use the project-specific lint endpoint
-    const endpoint = options.project
-      ? `/projects/${encodeURIComponent(options.project)}/ci/lint`
-      : '/ci/lint';
+    const endpoint = `/api/v4/projects/${encodeURIComponent(options.project)}/ci/lint`;
 
     return this.client.post<LintResult>(endpoint, { body });
   }

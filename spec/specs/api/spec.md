@@ -206,18 +206,23 @@ WHEN a command needs to validate GitLab CI pipeline YAML,
 the lint API SHALL provide methods to submit YAML to the GitLab CI Lint endpoint
 via the authenticated REST client.
 
+*Note: GitLab 14.0+ removed the global `/api/v4/ci/lint` endpoint.
+A `project` is always required. Endpoints use the `/api/v4/` prefix.*
+
 #### Scenario: Validate YAML content
 
 GIVEN a valid `.gitlab-ci.yml` content string
-WHEN `validate(content)` is called
-THEN the client sends a POST request to the CI Lint endpoint
+AND a project path "my-group/my-project"
+WHEN `validate(content, { project: "my-group/my-project" })` is called
+THEN the client sends a POST request to `/api/v4/projects/my-group%2Fmy-project/ci/lint`
 WITH JSON body `{ "content": "<yaml content>" }`
 AND returns a validation result with `status: "valid"`, empty `errors` array, and optional `warnings`
 
 #### Scenario: Validate invalid YAML
 
 GIVEN a `.gitlab-ci.yml` with syntax errors
-WHEN `validate(invalidContent)` is called
+AND a project path "my-group/my-project"
+WHEN `validate(invalidContent, { project: "my-group/my-project" })` is called
 THEN the client sends the POST request
 AND returns a validation result with `status: "invalid"`, `errors` array (each with `line`, `column`, `message`), and optional `warnings`
 
@@ -225,12 +230,64 @@ AND returns a validation result with `status: "invalid"`, `errors` array (each w
 
 GIVEN a project path "my-group/my-project"
 WHEN `validate(content, { project: "my-group/my-project" })` is called
-THEN the client uses the project-specific lint endpoint
+THEN the client uses the project-specific lint endpoint `/api/v4/projects/:id/ci/lint`
 AND the API validates with the project's CI variables and includes context
 
 #### Scenario: Validate with dry-run rules evaluation
 
 GIVEN a pipeline with conditional `rules:` clauses
-WHEN `validate(content, { dryRun: true })` is called
+AND a project path "my-group/my-project"
+WHEN `validate(content, { project: "my-group/my-project", dryRun: true })` is called
 THEN the client sends a POST request with `dry: true` in the body
 AND the API returns which jobs would execute and which would be excluded
+
+#### Scenario: Missing project throws ConfigurationError
+
+GIVEN no project path is specified
+WHEN `validate(content, {})` is called
+THEN the client throws a `ConfigurationError`
+AND the error message instructs the user to provide `--project`
+
+---
+
+### Requirement: Local YAML Validation
+
+WHEN no GitLab credentials are available,
+the CLI SHALL perform local YAML syntax and structure validation
+as a free first-pass check.
+
+#### Scenario: Valid local YAML syntax
+
+GIVEN a valid `.gitlab-ci.yml` content string with jobs
+WHEN `validateLocal(content)` is called
+THEN the function returns `status: "valid"`
+AND `errors` is an empty array
+AND `looksLikeGitLabCI` is `true`
+
+#### Scenario: Invalid YAML syntax
+
+GIVEN a `.gitlab-ci.yml` with invalid YAML syntax
+WHEN `validateLocal(brokenContent)` is called
+THEN the function returns `status: "invalid"`
+AND errors contain the YAML parse error with line and column
+
+#### Scenario: Job without script
+
+GIVEN a `.gitlab-ci.yml` where a job has no `script`, `trigger`, or `extends`
+WHEN `validateLocal(content)` is called
+THEN the function returns `status: "valid"`
+AND a warning is emitted indicating the job has no script or trigger
+
+#### Scenario: Common typos detected
+
+GIVEN a `.gitlab-ci.yml` where a job uses `scripts` (plural) instead of `script`
+WHEN `validateLocal(content)` is called
+THEN a warning is emitted suggesting the correct key name
+
+#### Scenario: Dot-prefixed job templates
+
+GIVEN a `.gitlab-ci.yml` with only dot-prefixed (hidden) job templates
+WHEN `validateLocal(content)` is called
+THEN the function returns `status: "valid"`
+AND `looksLikeGitLabCI` is `true`
+AND no warning about missing script is emitted

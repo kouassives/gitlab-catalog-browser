@@ -10,6 +10,7 @@
 
 import {
   type PaginationParams,
+  GitLabApiError,
   AuthenticationError,
   PermissionError,
   NotFoundError,
@@ -207,13 +208,8 @@ export class GitLabApiClient {
       // For non-JSON responses, return the status as unknown
       return { status: response.status } as unknown as T;
     } catch (err) {
-      // If it's already one of our typed errors, re-throw
-      if (err instanceof AuthenticationError ||
-          err instanceof PermissionError ||
-          err instanceof NotFoundError ||
-          err instanceof RateLimitError ||
-          err instanceof ServerError ||
-          err instanceof ConfigurationError) {
+      // Typed API errors (including GitLabApiError from throwHttpError) — re-throw
+      if (err instanceof GitLabApiError) {
         throw err;
       }
 
@@ -225,7 +221,7 @@ export class GitLabApiClient {
         );
       }
 
-      // Network or other errors
+      // Network errors (fetch TypeError, DNS failures, etc.) — wrap with context
       throw new NetworkError(
         this.baseUrl,
         err instanceof Error ? err.message : String(err)
@@ -270,8 +266,9 @@ export class GitLabApiClient {
         if (status >= 500) {
           throw new ServerError(status, statusText);
         }
-        // Generic HTTP error
-        throw new Error(`GitLab API error (${status}): ${message}`);
+        // Other HTTP errors (e.g. 422 Unprocessable Entity)
+        // Use GitLabApiError so it propagates as a typed API error, not a network error
+        throw new GitLabApiError(`GitLab API error (${status}): ${message}`, status);
     }
   }
 }

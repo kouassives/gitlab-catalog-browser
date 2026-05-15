@@ -5,6 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { LintApi } from './lint.js';
 import { GitLabApiClient } from './gitlab.js';
+import { ConfigurationError } from '../types/api.js';
 
 // ──────────────────────────────────────────────
 // Mock data
@@ -80,19 +81,32 @@ afterEach(() => {
 // ──────────────────────────────────────────────
 
 describe('LintApi', () => {
+  describe('Scenario: Project is required', () => {
+    it('should throw ConfigurationError when project is missing', async () => {
+      const api = new LintApi(createMockClient());
+
+      await expect(api.validate('stages: [build]', {})).rejects.toThrow(ConfigurationError);
+      await expect(api.validate('stages: [build]', {})).rejects.toThrow(
+        /project path is required/
+      );
+    });
+  });
+
   describe('Scenario: Validate YAML content', () => {
     it('should send valid YAML to CI Lint API and get valid result', async () => {
       mockFetchResponse(VALID_RESULT);
 
       const api = new LintApi(createMockClient());
-      const result = await api.validate('stages: [build]\nbuild:\n  script: echo hello');
+      const result = await api.validate('stages: [build]\nbuild:\n  script: echo hello', {
+        project: 'my-group/my-project',
+      });
 
       expect(result.status).toBe('valid');
       expect(result.errors).toHaveLength(0);
 
       // Verify POST request
       const [url, opts] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(url).toContain('/ci/lint');
+      expect(url).toContain('/api/v4/projects/my-group%2Fmy-project/ci/lint');
       expect((opts as RequestInit).method).toBe('POST');
 
       const body = JSON.parse((opts as RequestInit).body as string);
@@ -105,7 +119,9 @@ describe('LintApi', () => {
       mockFetchResponse(INVALID_RESULT);
 
       const api = new LintApi(createMockClient());
-      const result = await api.validate('stages: [build]');
+      const result = await api.validate('stages: [build]', {
+        project: 'my-group/my-project',
+      });
 
       expect(result.status).toBe('invalid');
       expect(result.errors.length).toBeGreaterThan(0);
@@ -122,14 +138,17 @@ describe('LintApi', () => {
       await api.validate('stages: [build]', { project: 'my-group/my-project' });
 
       const [url] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(url).toContain('/projects/my-group%2Fmy-project/ci/lint');
+      expect(url).toContain('/api/v4/projects/my-group%2Fmy-project/ci/lint');
     });
 
     it('should include include_jobs when requested', async () => {
       mockFetchResponse(VALID_RESULT);
 
       const api = new LintApi(createMockClient());
-      await api.validate('stages: [build]', { includeJobs: true });
+      await api.validate('stages: [build]', {
+        project: 'my-group/my-project',
+        includeJobs: true,
+      });
 
       const [, opts] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
       const body = JSON.parse((opts as RequestInit).body as string);
@@ -143,6 +162,7 @@ describe('LintApi', () => {
 
       const api = new LintApi(createMockClient());
       const result = await api.validate('stages: [build, test]\nbuild:\n  script: echo', {
+        project: 'my-group/my-project',
         dryRun: true,
       });
 

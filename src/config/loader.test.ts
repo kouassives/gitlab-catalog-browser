@@ -359,6 +359,27 @@ describe('getConfig - full precedence chain', () => {
     expect(result.sources.token).toBe('env-var');
   });
 
+  it('Scenario: Falls back to GITLAB_TOKEN when no GITLAB_CI_CLI_TOKEN', () => {
+    vi.stubEnv('GITLAB_CI_CLI_TOKEN', '');  // unset
+    vi.stubEnv('GITLAB_TOKEN', 'glpat-fallback');
+
+    mockExists(false);
+    const result = getConfig();
+
+    expect(result.config.token).toBe('glpat-fallback');
+    expect(result.sources.token).toBe('env-var');
+  });
+
+  it('Scenario: GITLAB_CI_CLI_TOKEN takes priority over GITLAB_TOKEN', () => {
+    vi.stubEnv('GITLAB_CI_CLI_TOKEN', 'glpat-primary');
+    vi.stubEnv('GITLAB_TOKEN', 'glpat-fallback');
+
+    mockExists(false);
+    const result = getConfig();
+
+    expect(result.config.token).toBe('glpat-primary'); // primary wins
+  });
+
   it('Scenario: Full precedence chain — CLI flags win', () => {
     vi.stubEnv('GITLAB_CI_CLI_URL', 'https://env-override.com');
 
