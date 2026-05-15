@@ -87,9 +87,21 @@ gitlab-catalog-browser component jobs <full-path> [--with-artifacts]
 ### validate
 Validate a .gitlab-ci.yml pipeline configuration.
 
+The `<file>` is the **local file** being tested (not fetched from GitLab).
+The `--project` flag provides **API context only** (resolves includes,
+evaluates rules, applies project variables).
+
 ```bash
-gitlab-catalog-browser validate <file> [--stdin] [--dry-run] [--project <path>] [--var <key=value>] [--json]
+gitlab-catalog-browser validate <file> [--stdin] [--dry-run] [--project <id-or-path>] [--var <key=value>] [--json]
 ```
+
+| Flag | Description |
+|------|-------------|
+| `--stdin` | Read pipeline content from stdin instead of a file |
+| `--dry-run` | Evaluate rules and show which jobs would execute |
+| `--project <id-or-path>` | Project ID (numeric) or namespace/project — API context for resolving includes and evaluating rules. Does NOT fetch the file from GitLab. |
+| `--var <key=value>` | Simulate CI/CD variables for dry-run evaluation (repeatable) |
+| `--json` | Output results as structured JSON |
 
 ### pipeline explain
 Show job dependency graph for specified jobs.

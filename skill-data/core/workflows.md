@@ -40,8 +40,11 @@ gitlab-catalog-browser component jobs to-be-continuous/docker-build
 
 ## Validating Pipelines
 
+The `<file>` is your **local working copy**. The `--project` flag is **API
+context only** — it does NOT fetch the file from GitLab.
+
 ```bash
-# Validate a .gitlab-ci.yml file
+# Validate a local .gitlab-ci.yml file (local syntax check only)
 gitlab-catalog-browser validate .gitlab-ci.yml
 
 # Validate with dry-run rules evaluation
@@ -50,7 +53,7 @@ gitlab-catalog-browser validate .gitlab-ci.yml --dry-run
 # Validate with simulated variables
 gitlab-catalog-browser validate .gitlab-ci.yml --dry-run --var CI_PIPELINE_SOURCE=merge_request_event
 
-# Validate with project context
+# Validate local file against a specific project context (resolves includes, rules, variables)
 gitlab-catalog-browser validate .gitlab-ci.yml --project my-group/my-project
 
 # Validate piped content
