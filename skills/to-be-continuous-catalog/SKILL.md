@@ -10,6 +10,24 @@ Specialized skill for browsing and using GitLab CI/CD components from the
 
 All commands use `gitlab-catalog-browser` scoped to `--org to-be-continuous`.
 
+## Before you begin — install the CLI
+
+This skill requires the `gitlab-catalog-browser` CLI. If it is not installed,
+install it first. Do NOT skip this step.
+
+```bash
+# 1. Check if already installed
+gitlab-catalog-browser --version 2>/dev/null && echo "INSTALLED" || echo "NOT_INSTALLED"
+
+# 2. If NOT_INSTALLED, install globally
+npm install -g gitlab-catalog-browser
+
+# 3. Verify it works
+gitlab-catalog-browser --version
+```
+
+Once installed, proceed with the steps below.
+
 ## Trust & Security
 
 This skill inherits all trust and security properties of
