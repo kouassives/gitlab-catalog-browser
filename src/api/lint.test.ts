@@ -20,7 +20,7 @@ const VALID_RESULT = {
 const INVALID_RESULT = {
   valid: false,
   errors: [
-    { line: 3, column: 1, message: 'jobs config should contain at least one job' },
+    'jobs config should contain at least one job',
   ],
   warnings: [],
 };
@@ -29,7 +29,7 @@ const WARNINGS_RESULT = {
   valid: true,
   errors: [],
   warnings: [
-    { line: 10, column: 5, message: 'job: build may be interrupted by a shutdown' },
+    'job: build may be interrupted by a shutdown',
   ],
 };
 
@@ -124,8 +124,8 @@ describe('LintApi', () => {
 
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
-      expect(result.errors[0]).toHaveProperty('line');
-      expect(result.errors[0]).toHaveProperty('message');
+      expect(typeof result.errors[0]).toBe('string');
+      expect(result.errors[0]).toContain('jobs config');
     });
   });
 

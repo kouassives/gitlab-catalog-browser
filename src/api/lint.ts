@@ -23,18 +23,6 @@ export interface LintValidateOptions {
   variables?: Record<string, string>;
 }
 
-export interface LintError {
-  line?: number;
-  column?: number;
-  message: string;
-}
-
-export interface LintWarning {
-  line?: number;
-  column?: number;
-  message: string;
-}
-
 export interface LintJob {
   name: string;
   stage: string;
@@ -47,10 +35,10 @@ export interface LintJob {
 export interface LintResult {
   /** Whether the pipeline is valid (GitLab API returns boolean `valid`) */
   valid: boolean;
-  /** List of errors (empty if valid) */
-  errors: LintError[];
-  /** List of warnings */
-  warnings: LintWarning[];
+  /** List of error messages (empty if valid) */
+  errors: string[];
+  /** List of warning messages */
+  warnings: string[];
   /** List of jobs (when include_jobs or dry_run is true) */
   jobs?: LintJob[];
   /** List of included files */

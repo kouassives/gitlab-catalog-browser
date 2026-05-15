@@ -141,10 +141,16 @@ function formatTextResult(ctx: FormatContext): string {
     }
 
     if (ctx.api.errors.length > 0) {
-      lines.push(...formatLocalIssues('  Errors', ctx.api.errors));
+      lines.push('  Errors:');
+      for (const err of ctx.api.errors) {
+        lines.push(`    ${err}`);
+      }
     }
     if (ctx.api.warnings.length > 0) {
-      lines.push(...formatLocalIssues('  Warnings', ctx.api.warnings));
+      lines.push('  Warnings:');
+      for (const warn of ctx.api.warnings) {
+        lines.push(`    ${warn}`);
+      }
     }
     if (ctx.api.jobs && ctx.api.jobs.length > 0) {
       lines.push('  Jobs:');

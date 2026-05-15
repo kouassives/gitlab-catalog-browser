@@ -61,8 +61,8 @@ const MOCK_VALID_RESULT = {
 const MOCK_INVALID_RESULT = {
   valid: false,
   errors: [
-    { line: 3, column: 1, message: 'jobs config should contain at least one job' },
-    { line: 5, column: 3, message: 'unknown key: blah' },
+    'jobs config should contain at least one job',
+    'unknown key: blah',
   ],
   warnings: [],
 };
@@ -71,7 +71,7 @@ const MOCK_WARNINGS_RESULT = {
   valid: true,
   errors: [],
   warnings: [
-    { line: 10, column: 5, message: 'job: build may be interrupted by a shutdown' },
+    'job: build may be interrupted by a shutdown',
   ],
 };
 
@@ -163,9 +163,7 @@ describe('Scenario: Invalid pipeline file', () => {
     expect(result.exitCode).toBe(1);
     expect(result.output).toContain('✓ YAML syntax: valid');
     expect(result.output).toContain('✗ Pipeline configuration is invalid');
-    expect(result.output).toContain('Line 3, col 1');
     expect(result.output).toContain('jobs config should contain at least one job');
-    expect(result.output).toContain('Line 5, col 3');
     expect(result.output).toContain('unknown key: blah');
   });
 });
@@ -185,7 +183,6 @@ describe('Scenario: Pipeline with warnings', () => {
     expect(result.exitCode).toBe(0);
     expect(result.output).toContain('✓ YAML syntax: valid');
     expect(result.output).toContain('✓ Pipeline configuration is valid');
-    expect(result.output).toContain('Line 10, col 5');
     expect(result.output).toContain('job: build may be interrupted by a shutdown');
   });
 });
