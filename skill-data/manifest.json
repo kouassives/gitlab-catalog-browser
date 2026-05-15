@@ -7,6 +7,10 @@
     {
       "name": "templates",
       "description": "Pipeline template patterns including basic, multi-stage, and Docker build configurations"
+    },
+    {
+      "name": "to-be-continuous-catalog",
+      "description": "Browse and use GitLab CI/CD components from the to-be-continuous organization"
     }
   ]
 }
