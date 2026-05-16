@@ -3,6 +3,7 @@
 [![npm](https://img.shields.io/npm/v/gitlab-catalog-browser)](https://www.npmjs.com/package/gitlab-catalog-browser)
 [![CI](https://github.com/kouassives/gitlab-catalog-browser/actions/workflows/ci.yml/badge.svg)](https://github.com/kouassives/gitlab-catalog-browser/actions/workflows/ci.yml)
 [![skills.sh](https://skills.sh/b/kouassives/gitlab-catalog-browser)](https://skills.sh/kouassives/gitlab-catalog-browser)
+[![agentskill.sh](https://img.shields.io/badge/agentskill.sh-%40kouassives%2Fgitlab--catalog--browser-8B5CF6)](https://agentskill.sh/@kouassives/gitlab-catalog-browser)
 
 CLI tool for AI agents to browse GitLab CI/CD Catalog, inspect component schemas, validate pipeline configurations, and analyze pipeline structure. Inspired by [agent-browser](https://github.com/vercel-labs/agent-browser).
 
